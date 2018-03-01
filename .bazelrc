@@ -1,0 +1,7 @@
+
+build  --verbose_failures 
+test --verbose_failures --test_output=errors --test_verbose_timeout_warnings
+
+build --force_python=py3 --host_force_python=py3 --python_top="//:python-3.6"
+test --force_python=py3 --host_force_python=py3 --python_top="//:python-3.6"
+run --force_python=py3 --host_force_python=py3 --python_top="//:python-3.6"
