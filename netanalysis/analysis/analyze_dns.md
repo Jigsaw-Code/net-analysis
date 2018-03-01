@@ -11,7 +11,7 @@ In this example, we will fetch measurements for `www.youtube.com` from OONI and 
 Run
 
 ```
-.venv/bin/python -m netanalysis.ooni.fetch_measurements --debug --output_dir=ooni_data --country=* --url=www.youtube.com --num_measurements=1000
+time .venv/bin/python -m netanalysis.ooni.fetch_measurements --debug --output_dir=ooni_data --country=* --url=www.youtube.com --num_measurements=1000
 ```
 
 This will take in the order of 10 minutes (unfortunately the OONI API is not designed for batch processing 😞). Measurements will be written as files in  `ooni_data/<domain>/<country>/<measurement_id>`.
@@ -33,6 +33,6 @@ Run
 .venv/bin/jupyter notebook
 ```
 
-And open the Jupyter Notebook at http://localhost:8888/notebooks/netanalysis/analysis/Domain%20Analysis.ipynb
+And open the Jupyter Notebook `notebooks/netanalysis/analysis/Domain Analysis.ipynb`.
 
-That notebook will allow you to explore the DNS data and evaluate interference.
+That notebook will allow you to explore the DNS data and analyze possible interference.
