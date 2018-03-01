@@ -49,6 +49,15 @@ class AnalysisApp:
         self.progress_bar.value = done
 
 
+def _truncate(text: str, max_len: int) -> str:
+    """Truncates the text to the given length.
+
+    Adds a trailing elipsis if text gets truncated.
+    """
+    if len(text) > max_len:
+        return text[:max_len - 1] + "…"
+    return text
+
 
 class DomainApp:
     def __init__(self, dns_graph, domain):
@@ -75,7 +84,8 @@ class DomainApp:
 
     def tls_verify_unknowns(self):
         validator = domain_ip_validator.DomainIpValidator()
-        for domain, target in self.classifier.class_graph.edges():
+        # Try short domains first: they usually validate CNAMES, which tend to be longer.
+        for domain, target in sorted(self.classifier.class_graph.edges(), key=lambda e: (len(e[0]), e[1])):
             if self.classifier.get_class(domain, target) != dc.EdgeClass.UNKNOWN:
                 continue
             try:
@@ -93,4 +103,4 @@ class DomainApp:
                         domain, net, "Pass TLS validation")
                     break
                 except Exception as e:
-                    print(repr(e))
+                    print(_truncate(repr(e), 200))
