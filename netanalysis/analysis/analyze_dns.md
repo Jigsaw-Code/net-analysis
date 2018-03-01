@@ -33,6 +33,6 @@ Run
 .venv/bin/jupyter notebook
 ```
 
-And open the Jupyter Notebook `notebooks/netanalysis/analysis/Domain Analysis.ipynb`.
+And open the Jupyter Notebook `notebooks/netanalysis/analysis/DomainAnalysis.ipynb`.
 
 That notebook will allow you to explore the DNS data and analyze possible interference.

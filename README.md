@@ -18,6 +18,8 @@ _Disclaimer: This is not an officially supported Jigsaw product._
 
 [Analyze DNS Queries](netanalysis/analysis/analyze_dns.md) describes how to fetch data from OONI and check for interference.
 
+[netanalysis/analysis/DomainAnalysis.ipynb](netanalysis/analysis/DomainAnalysis.ipynb) gives you an idea of what the analysis look like.
+
 ### Get information about an IP address:
 
 ```
