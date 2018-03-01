@@ -23,41 +23,14 @@ That will create a Python 3.6 virtual environment under `.venv` to be used by Ba
 
 On macOS you may get an error if you don't have the needed developer tools. You can use `xcode-select --install` to fix that.
 
-You must do all development inside the Virtual Environment. Load the environment with:
+## Add External Dependencies
+
+Libraries used in code should be listed in [third_party/py_requirements.txt](third_party/py_requirements.txt).
+
+Tools for development should be listed in [py_dev_requirements.txt](py_dev_requirements.txt).
+
+To install the new dependencies without re-creating the Python virtual environment, run
 
 ```
-./pipenv.sh shell
+./pipenv.sh install -r py_dev_requirements.txt
 ```
-
-This will start a shell where `python` is the interpreter from the virtual environment.
-Unfortunately this is needed because the `pip_import` rules hard-code `python` as the interpreter. See [Fetching dependencies assumer python2](https://github.com/google/containerregistry/issues/42).
-
-
-## Add PIP Dependencies
-
-We use [`pip_import`](https://github.com/bazelbuild/rules_python/blob/master/docs/python/pip.md#pip_import) to pull pip dependencies.
-
-To add a new pip dependency:
-
-1. Add it to [`third_party/py_requirements.txt`](third_party/py_requirements.txt).
-
-1. Depend on it in your Python target:
-
-````
-load("@pip_packages//:requirements.bzl", "requirement")
-
-py_library(
-    name = "bar",
-    ...
-    deps = [
-       "//my/other:dep",
-       requirement("futures"),
-       requirement("mock"),
-    ],
-)
-````
-
-
-## Add Development Tools
-
-Add new development tools to `py_dev_requirements.txt` and rerun `./setup_python.sh`.
