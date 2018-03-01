@@ -1,0 +1,6 @@
+pylint
+autopep8
+mypy
+rope
+
+-r third_party/py_requirements.txt

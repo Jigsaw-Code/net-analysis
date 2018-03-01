@@ -1,0 +1,18 @@
+# Python
+__pycache__
+.ipynb_checkpoints
+.venv
+.mypy_cache
+
+# Pipfile is generated from py_dev_requirements.txt
+Pipfile
+
+# Bazel output
+/bazel-*
+
+/ooni_data
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/
