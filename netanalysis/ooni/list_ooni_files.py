@@ -17,6 +17,7 @@ import itertools
 import logging
 import os.path
 import sys
+import tarfile
 
 import boto3
 from botocore.handlers import disable_signing
@@ -42,8 +43,12 @@ def main(args):
         # TODO: Handle .tar.lz4 files
         obj_body = obj.get()["Body"]  # type: botocore.response.StreamingBody
         with lz4.frame.open(obj_body, "r") as obj_file:
-            # TODO: trim measurements
-            print(obj_file.read(100))
+            if obj.key.endswith(".tar.lz4"):
+                tar_file = tarfile.open(fileobj=obj_file, mode="r|")
+                tar_file.list()
+            else:
+                # TODO: trim measurements
+                print(obj_file.read(100))
 
 
 if __name__ == "__main__":
