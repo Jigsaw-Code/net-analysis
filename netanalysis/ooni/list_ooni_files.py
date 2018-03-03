@@ -45,7 +45,9 @@ def main(args):
         with lz4.frame.open(obj_body, "r") as obj_file:
             if obj.key.endswith(".tar.lz4"):
                 with tarfile.open(fileobj=obj_file, mode="r|") as tar_file:
-                    tar_file.list()
+                    for entry in tar_file:
+                        print(entry.name)
+                        print(tar_file.extractfile(entry).read(100))
             else:
                 # TODO: trim measurements
                 print(obj_file.read(100))
