@@ -44,8 +44,8 @@ def main(args):
         obj_body = obj.get()["Body"]  # type: botocore.response.StreamingBody
         with lz4.frame.open(obj_body, "r") as obj_file:
             if obj.key.endswith(".tar.lz4"):
-                tar_file = tarfile.open(fileobj=obj_file, mode="r|")
-                tar_file.list()
+                with tarfile.open(fileobj=obj_file, mode="r|") as tar_file:
+                    tar_file.list()
             else:
                 # TODO: trim measurements
                 print(obj_file.read(100))
