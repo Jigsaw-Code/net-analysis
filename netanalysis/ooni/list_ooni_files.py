@@ -20,11 +20,10 @@ import sys
 
 import boto3
 from botocore.handlers import disable_signing
+from botocore.response import StreamingBody
+import lz4.frame
 
-def list_files(test_name="web_connectivity", prefix=""):
-    s3 = boto3.resource("s3")
-    s3.meta.client.meta.events.register('choose-signer.s3.*', disable_signing)
-    bucket = s3.Bucket("ooni-data")
+def list_files(bucket, test_name="web_connectivity", prefix=""):
     for obj in bucket.objects.filter(Prefix="autoclaved/jsonl.tar.lz4/" + prefix):
         filename = obj.key.rsplit("/", 1)[-1]
         if not test_name or test_name in filename:
@@ -35,20 +34,24 @@ def main(args):
     logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
 
     # See https://ooni.torproject.org/post/mining-ooni-data/
-    s3 = boto3.resource("s3")
+    s3 = boto3.resource("s3")  # type: boto3.session.Session.resource
     s3.meta.client.meta.events.register('choose-signer.s3.*', disable_signing)
     bucket = s3.Bucket("ooni-data")
-    for obj in itertools.islice(list_files(test_name=args.test_name, prefix=args.prefix), args.limit):
-        print(obj)
-    # objects = s3.list_objects_v2(Bucket="ooni-data", Prefix="autoclaved/jsonl.tar.lz4/2017-11-10/")
-    # print(objects)
+    for obj in itertools.islice(list_files(bucket, test_name=args.test_name, prefix=args.prefix), args.limit):
+        print("Fetching %s" % obj.key)
+        # TODO: Handle .tar.lz4 files
+        obj_body = obj.get()["Body"]  # type: botocore.response.StreamingBody
+        with lz4.frame.open(obj_body, "r") as obj_file:
+            # TODO: trim measurements
+            print(obj_file.read(100))
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         "List OONI files")
+    parser.add_argument("--ooni_measurements", type=str, required=True)
     parser.add_argument("--test_name", type=str, default="web_connectivity")
     parser.add_argument("--prefix", type=str, default="")
-    parser.add_argument("--limit", type=int, default=1000)
+    parser.add_argument("--limit", type=int, default=100)
     parser.add_argument("--debug", action="store_true")
     sys.exit(main(parser.parse_args()))
