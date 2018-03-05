@@ -15,13 +15,17 @@
 import argparse
 import asyncio
 from concurrent.futures import Executor, ThreadPoolExecutor
+from functools import singledispatch
+import gzip
 import itertools
+import json
 import logging
 import os.path
 import pathlib
 import sys
 import tarfile
 from typing import Iterable, TextIO, Tuple
+from urllib.parse import urlparse
 
 import boto3
 from botocore.handlers import disable_signing
@@ -71,6 +75,31 @@ class S3OoniClient:
         return s3_obj.get()["Body"]
 
 
+@singledispatch
+def _trim_json(json_obj, max_string_size: int):
+    return json_obj
+
+
+@_trim_json.register(dict)
+def _(json_dict: dict, max_string_size: int):
+    keys_to_delete = []  # type: str
+    for key, value in json_dict.items():
+        if type(value) == str and len(value) > max_string_size:
+            keys_to_delete.append(key)
+        else:
+            _trim_json(value, max_string_size)
+    for key in keys_to_delete:
+        del json_dict[key]
+    return json_dict
+
+
+@_trim_json.register(list)
+def _(json_list: list, max_string_size: int):
+    for item in json_list:
+        _trim_json(item, max_string_size)
+    return json_list
+
+
 async def main(args):
     LOGGER.setLevel(logging.DEBUG if args.debug else logging.INFO)
 
@@ -86,13 +115,21 @@ async def main(args):
         file_tasks = []
         async for file_path in atop_n(
                 ooni_client.list_files(test_name=args.test_name, prefix=args.prefix), args.limit):
-            def process_report_file(filename, file_obj):
+            def process_report_file(file_obj):
                 count = 0
                 for line in file_obj:
+                    measurement_json = _trim_json(
+                        json.loads(line, encoding="utf-8"), 1000)
+                    measurement_id = measurement_json["id"]
+                    domain = urlparse(measurement_json["input"]).hostname
+                    country = measurement_json["probe_cc"]
+                    out_filename = os.path.join(
+                        args.ooni_measurements, domain, country, "%s.json.gz" % measurement_id)
+                    os.makedirs(os.path.dirname(out_filename), exist_ok=True)
+                    with gzip.open(out_filename, mode="wt+") as file:
+                        json.dump(measurement_json, file)
+                    LOGGER.debug("Wrote %s", out_filename)
                     count += 1
-                print(filename)
-                print("Measurements: %d" % count)
-
 
             def process_s3_file(file_path):
                 try:
@@ -104,16 +141,17 @@ async def main(args):
                         with tarfile.open(fileobj=report_file, mode="r|") as tar_file:
                             for entry in tar_file:
                                 print("Filename (tar): %s" % entry.name)
-                                process_report_file(tar_file.extractfile(entry))
+                                process_report_file(
+                                    tar_file.extractfile(entry))
                     else:
                         print("Filename: %s" % file_path)
                         process_report_file(report_file)
                 finally:
                     if report_file:
                         report_file.close()
-            file_tasks.append(asyncio.get_event_loop().run_in_executor(executor, process_s3_file, file_path))
+            file_tasks.append(asyncio.get_event_loop().run_in_executor(
+                executor, process_s3_file, file_path))
         await asyncio.gather(*file_tasks)
-
 
 
 if __name__ == "__main__":
