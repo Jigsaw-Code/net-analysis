@@ -14,7 +14,7 @@ Run
 time .venv/bin/python -m netanalysis.ooni.fetch_measurements --debug --output_dir=ooni_data --country=* --url=www.youtube.com --num_measurements=1000
 ```
 
-This will take in the order of 10 minutes (unfortunately the OONI API is not designed for batch processing 😞). Measurements will be written as files in  `ooni_data/<domain>/<country>/<measurement_id>`.
+This will take in the order of 10 minutes (the OONI API is not designed for batch processing). Measurements will be written as files in  `ooni_data/<domain>/<country>/<measurement_id>`.
 
 ## Convert to DNS resource records
 
