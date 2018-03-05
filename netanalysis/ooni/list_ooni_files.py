@@ -13,6 +13,8 @@
 # limitations under the License.
 
 import argparse
+import asyncio
+from concurrent.futures import Executor, ThreadPoolExecutor
 import itertools
 import logging
 import os.path
@@ -29,45 +31,89 @@ import lz4.frame
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(name="list_ooni_files")  # type: logging.Logger
 
-def read_report_files(ooni_bucket, test_name="web_connectivity", prefix="") -> Iterable[Tuple[str, TextIO]]:
-    """
-    Returns a pair (<filename>, <fileobj>) for each OONI report file.
 
-    This generator takes care of navigating the hybrid structure in the OONI dataset.
-    """
-    REPORTS_ROOT = pathlib.PurePosixPath("autoclaved/jsonl.tar.lz4")
-    for s3_obj in ooni_bucket.objects.filter(Prefix=str(REPORTS_ROOT / prefix)):
-        report_path = pathlib.PurePosixPath(s3_obj.key).relative_to(REPORTS_ROOT)
-        LOGGER.debug("Found S3 file %s", s3_obj.key)
-        if test_name and (test_name not in report_path.name):
-            continue
-        report_file = s3_obj.get()["Body"]  # type: botocore.response.StreamingBody
-        if report_path.suffix == ".lz4":
-            report_path = report_path.with_name(report_path.stem)
-            report_file = lz4.frame.open(report_file, "r")
-        with report_file:
-            if report_path.suffix == ".tar":
-                with tarfile.open(fileobj=report_file, mode="r|") as tar_file:
-                    for entry in tar_file:
-                        yield entry.name, tar_file.extractfile(entry)
-            else:
-                yield str(report_path), report_file
+async def atop_n(inner, n: int):
+    remaining = n
+    async for item in inner:
+        if remaining <= 0:
+            return
+        yield item
+        remaining -= 1
 
 
-def main(args):
+async def aiter(iterable, executor):
+    iterator = iter(iterable)
+    while True:
+        value = await asyncio.get_event_loop().run_in_executor(executor, next, iterator, None)
+        if value is None:
+            return
+        yield value
+
+
+class S3OoniClient:
+    def __init__(self, bucket, root_path: str, executor: Executor):
+        self._bucket = bucket
+        self._root_path = pathlib.PurePosixPath(root_path)
+        self._executor = executor
+
+    async def list_files(self, test_name="web_connectivity", prefix=""):
+        async for s3_obj in aiter(self._bucket.objects.filter(Prefix=str(self._root_path / prefix)),
+                                  self._executor):
+            report_path = pathlib.PurePosixPath(
+                s3_obj.key).relative_to(self._root_path)
+            if test_name and (test_name not in report_path.name):
+                continue
+            yield report_path
+
+    def fetch_file(self, filename):
+        key = str(self._root_path.joinpath(filename))
+        s3_obj = self._bucket.Object(key)
+        return s3_obj.get()["Body"]
+
+
+async def main(args):
     LOGGER.setLevel(logging.DEBUG if args.debug else logging.INFO)
+
     LOGGER.debug("Initializing Boto")
     # See https://ooni.torproject.org/post/mining-ooni-data/
     s3 = boto3.resource("s3")  # type: boto3.resources.base.ServiceResource
     s3.meta.client.meta.events.register('choose-signer.s3.*', disable_signing)
     bucket = s3.Bucket("ooni-data")
-    for filename, fileobj in itertools.islice(read_report_files(
-            bucket, test_name=args.test_name, prefix=args.prefix), args.limit):
-        with fileobj:
-            # TODO: trim measurements
-            if LOGGER.isEnabledFor(logging.DEBUG):
-                LOGGER.debug("Reading %s" % filename)
-                print("  %s" % fileobj.read(80))
+    with ThreadPoolExecutor(10) as executor:
+        ooni_client = S3OoniClient(
+            bucket, "autoclaved/jsonl.tar.lz4", executor)
+
+        file_tasks = []
+        async for file_path in atop_n(
+                ooni_client.list_files(test_name=args.test_name, prefix=args.prefix), args.limit):
+            def process_report_file(filename, file_obj):
+                count = 0
+                for line in file_obj:
+                    count += 1
+                print(filename)
+                print("Measurements: %d" % count)
+
+
+            def process_s3_file(file_path):
+                try:
+                    report_file = ooni_client.fetch_file(file_path)
+                    if file_path.suffix == ".lz4":
+                        file_path = file_path.with_name(file_path.stem)
+                        report_file = lz4.frame.open(report_file, "r")
+                    if file_path.suffix == ".tar":
+                        with tarfile.open(fileobj=report_file, mode="r|") as tar_file:
+                            for entry in tar_file:
+                                print("Filename (tar): %s" % entry.name)
+                                process_report_file(tar_file.extractfile(entry))
+                    else:
+                        print("Filename: %s" % file_path)
+                        process_report_file(report_file)
+                finally:
+                    if report_file:
+                        report_file.close()
+            file_tasks.append(asyncio.get_event_loop().run_in_executor(executor, process_s3_file, file_path))
+        await asyncio.gather(*file_tasks)
+
 
 
 if __name__ == "__main__":
@@ -78,4 +124,5 @@ if __name__ == "__main__":
     parser.add_argument("--prefix", type=str, default="")
     parser.add_argument("--limit", type=int, default=100)
     parser.add_argument("--debug", action="store_true")
-    sys.exit(main(parser.parse_args()))
+    sys.exit(asyncio.get_event_loop().run_until_complete(
+        main(parser.parse_args())))
