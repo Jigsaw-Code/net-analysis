@@ -60,9 +60,11 @@ class S3OoniClient:
         self._root_path = pathlib.PurePosixPath(root_path)
         self._executor = executor
 
-    async def list_files(self, test_name="web_connectivity", prefix=""):
-        async for s3_obj in aiter(self._bucket.objects.filter(Prefix=str(self._root_path / prefix)),
-                                  self._executor):
+    async def list_files(self, test_name="web_connectivity", start_date=None):
+        filter_args = {"Prefix": str(self._root_path)}
+        if start_date:
+            filter_args["Marker"] = str(self._root_path / start_date)
+        async for s3_obj in aiter(self._bucket.objects.filter(**filter_args), self._executor):
             report_path = pathlib.PurePosixPath(
                 s3_obj.key).relative_to(self._root_path)
             if test_name and (test_name not in report_path.name):
@@ -113,8 +115,8 @@ async def main(args):
             bucket, "autoclaved/jsonl.tar.lz4", executor)
 
         file_tasks = []
-        async for file_path in atop_n(
-                ooni_client.list_files(test_name=args.test_name, prefix=args.prefix), args.limit):
+        async for file_path in atop_n(ooni_client.list_files(
+                test_name=args.test_name, start_date=args.start_date), args.limit):
             def file_path_to_lines(file_path):
                 s3_file = ooni_client.fetch_file(file_path)
                 if file_path.suffix == ".lz4":
@@ -137,7 +139,8 @@ async def main(args):
                 domain = urlparse(measurement["input"]).hostname
                 country = measurement["probe_cc"]
                 if not measurement_id or not domain or not country:
-                    LOGGER.warning("Missing fields in measurement: %s", measurement)
+                    LOGGER.warning(
+                        "Missing fields in measurement: %s", measurement)
                     return
                 out_filename = os.path.join(
                     args.ooni_measurements, domain, country, "%s.json.gz" % measurement_id)
@@ -151,7 +154,6 @@ async def main(args):
                     measurement = _trim_json(
                         json.loads(line, encoding="utf-8"), 1000)
                     save_measurement(measurement)
-                    
 
             file_tasks.append(asyncio.get_event_loop().run_in_executor(
                 executor, process_s3_file_path, file_path))
@@ -163,8 +165,9 @@ if __name__ == "__main__":
         "List OONI files")
     parser.add_argument("--ooni_measurements", type=str, required=True)
     parser.add_argument("--test_name", type=str, default="web_connectivity")
-    parser.add_argument("--prefix", type=str, default="")
     parser.add_argument("--limit", type=int, default=100)
+    parser.add_argument("--start_date", type=str)
     parser.add_argument("--debug", action="store_true")
+    args = parser.parse_args()
     sys.exit(asyncio.get_event_loop().run_until_complete(
-        main(parser.parse_args())))
+        main(args)))
