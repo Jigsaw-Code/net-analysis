@@ -115,42 +115,46 @@ async def main(args):
         file_tasks = []
         async for file_path in atop_n(
                 ooni_client.list_files(test_name=args.test_name, prefix=args.prefix), args.limit):
-            def process_report_file(file_obj):
-                count = 0
-                for line in file_obj:
-                    measurement_json = _trim_json(
-                        json.loads(line, encoding="utf-8"), 1000)
-                    measurement_id = measurement_json["id"]
-                    domain = urlparse(measurement_json["input"]).hostname
-                    country = measurement_json["probe_cc"]
-                    out_filename = os.path.join(
-                        args.ooni_measurements, domain, country, "%s.json.gz" % measurement_id)
-                    os.makedirs(os.path.dirname(out_filename), exist_ok=True)
-                    with gzip.open(out_filename, mode="wt+") as file:
-                        json.dump(measurement_json, file)
-                    LOGGER.debug("Wrote %s", out_filename)
-                    count += 1
+            def file_path_to_lines(file_path):
+                s3_file = ooni_client.fetch_file(file_path)
+                if file_path.suffix == ".lz4":
+                    file_path = file_path.with_name(file_path.stem)
+                    s3_file = lz4.frame.open(s3_file, "r")
 
-            def process_s3_file(file_path):
-                try:
-                    report_file = ooni_client.fetch_file(file_path)
-                    if file_path.suffix == ".lz4":
-                        file_path = file_path.with_name(file_path.stem)
-                        report_file = lz4.frame.open(report_file, "r")
-                    if file_path.suffix == ".tar":
-                        with tarfile.open(fileobj=report_file, mode="r|") as tar_file:
+                with s3_file:
+                    if file_path.suffix == ".json":
+                        with s3_file:
+                            for line in s3_file:
+                                yield line
+                    elif file_path.suffix == ".tar":
+                        with tarfile.open(fileobj=s3_file, mode="r|") as tar_file:
                             for entry in tar_file:
-                                print("Filename (tar): %s" % entry.name)
-                                process_report_file(
-                                    tar_file.extractfile(entry))
-                    else:
-                        print("Filename: %s" % file_path)
-                        process_report_file(report_file)
-                finally:
-                    if report_file:
-                        report_file.close()
+                                for line in tar_file.extractfile(entry):
+                                    yield line
+
+            def save_measurement(measurement):
+                measurement_id = measurement["id"]
+                domain = urlparse(measurement["input"]).hostname
+                country = measurement["probe_cc"]
+                if not measurement_id or not domain or not country:
+                    LOGGER.warning("Missing fields in measurement: %s", measurement)
+                    return
+                out_filename = os.path.join(
+                    args.ooni_measurements, domain, country, "%s.json.gz" % measurement_id)
+                os.makedirs(os.path.dirname(out_filename), exist_ok=True)
+                with gzip.open(out_filename, mode="wt+") as file:
+                    json.dump(measurement, file)
+                LOGGER.debug("Wrote %s", out_filename)
+
+            def process_s3_file_path(file_path):
+                for line in file_path_to_lines(file_path):
+                    measurement = _trim_json(
+                        json.loads(line, encoding="utf-8"), 1000)
+                    save_measurement(measurement)
+                    
+
             file_tasks.append(asyncio.get_event_loop().run_in_executor(
-                executor, process_s3_file, file_path))
+                executor, process_s3_file_path, file_path))
         await asyncio.gather(*file_tasks)
 
 
