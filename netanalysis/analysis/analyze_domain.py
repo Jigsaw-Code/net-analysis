@@ -53,6 +53,7 @@ import networkx
 import netanalysis.autonomous_system.simple_autonomous_system as sas
 import netanalysis.autonomous_system.model as autonomous_system
 
+
 class DnsResolution:
     def __init__(self, measurement, country=None, resolver_ip=None, client_as=None, time=None, url=None):
         self.measurement = measurement
@@ -96,9 +97,11 @@ def get_dns_results(as_repo: autonomous_system.AsRepository,
         client_asn = int(m.get("probe_asn")[2:])
         client_as = as_repo.get_as(client_asn)
         resolver_ip_str = path_get(m, ["test_keys", "client_resolver"])[0]
-        resolver_ip = ipaddress.ip_address(resolver_ip_str) if resolver_ip_str else None
+        resolver_ip = ipaddress.ip_address(
+            resolver_ip_str) if resolver_ip_str else None
         for measurement in path_get(m, ["test_keys", "queries"]):
-            dns_resolution = DnsResolution(m, country, resolver_ip, client_as, time, url)
+            dns_resolution = DnsResolution(
+                m, country, resolver_ip, client_as, time, url)
             dns_resolution.cnames.append(measurement.get("hostname"))
             for answer in measurement.get("answers"):
                 cname = answer.get("hostname")
@@ -108,9 +111,11 @@ def get_dns_results(as_repo: autonomous_system.AsRepository,
                     ip_str = answer.get("ipv4") or answer.get("ipv6")
                     if ip_str:
                         try:
-                            dns_resolution.ips.append(ipaddress.ip_address(ip_str))
+                            dns_resolution.ips.append(
+                                ipaddress.ip_address(ip_str))
                         except ValueError:
-                            logging.warning("Measurement %s: invalid IP answer %s", m["id"], ip_str)
+                            logging.warning(
+                                "Measurement %s: invalid IP answer %s", m["id"], ip_str)
             dns_results.append(dns_resolution)
     return dns_results
 
@@ -126,7 +131,7 @@ def get_control_resolutions(measurements):
             except ValueError:
                 resolution.cnames.append(ip_str)
         if resolution.ips:
-          control_resolutions.append(resolution)
+            control_resolutions.append(resolution)
     return control_resolutions
 
 
@@ -155,22 +160,25 @@ class DnsResolutionClassification(Enum):
     CENSORED = 2
     EMPTY = 3
 
+
 def is_success_http_code(http_code):
     return 200 <= http_code and http_code <= 399
+
 
 class DnsResolutionClassifier:
     def __init__(self) -> None:
         self._good_ips = set()  # type: Set
-    
+
     def _get_ip_key(self, ip):
         return ipaddress.ip_network(ip).supernet(new_prefix=21)
 
     def add_good_resolution(self, resolution: DnsResolution):
         for ip in resolution.ips:
             self._good_ips.add(self._get_ip_key(ip))
-    
+
     def classify_resolutions(self, resolutions: List[DnsResolution]):
-        classifications = [DnsResolutionClassification.UNKNOWN] * len(resolutions)
+        classifications = [
+            DnsResolutionClassification.UNKNOWN] * len(resolutions)
         base_good_ips = 0
         while base_good_ips < len(self._good_ips):
             base_good_ips = len(self._good_ips)
@@ -198,11 +206,13 @@ class DnsResolutionClassifier:
         print("Good IPs: %s" % self._good_ips)
         return classifications
 
+
 def group_by(sequence, get_key):
     result = defaultdict(list)
     for item in sequence:
         result[get_key(item)].append(item)
     return result
+
 
 def make_resolver_key(as_repo, resolution):
     resolver_as = as_repo.get_as_for_ip(resolution.resolver_ip)
@@ -211,16 +221,18 @@ def make_resolver_key(as_repo, resolution):
     else:
         return resolver_as.org.name or resolver_as.org.id
 
+
 def as_str(asys):
     org = asys.org.name or asys.org.id
     if org:
-      return "%s (%s), Org: '%s' from %s" % (asys.name, asys.type.name, org[:20], asys.org.country)
+        return "%s (%s), Org: '%s' from %s" % (asys.name, asys.type.name, org[:20], asys.org.country)
     else:
-      return asys.name
+        return asys.name
 
 
 # Cache for ip -> hostname resolutions
 _IP_NAMES = {}  # type: Dict[str, str]
+
 
 def resolve_ip(ip):
     hostname = _IP_NAMES.get(ip.compressed, "")
@@ -231,6 +243,7 @@ def resolve_ip(ip):
             hostname = None
         _IP_NAMES[ip.compressed] = hostname
     return hostname
+
 
 def show_resolutions_graph(as_repo, domain, control_resolutions, dns_resolutions):
     graph = networkx.DiGraph()
@@ -259,7 +272,8 @@ def show_resolutions_graph(as_repo, domain, control_resolutions, dns_resolutions
                 cnames.add(cname)
             for ip_address in resolution.ips or [None]:
                 if ip_address:
-                    ip_net = ipaddress.ip_network(ip_address).supernet(new_prefix=22)
+                    ip_net = ipaddress.ip_network(
+                        ip_address).supernet(new_prefix=22)
                     asys = as_repo.get_as_for_ip(ip_address)
                     as_str = asys.name or str(asys.id)
                     ases.add(as_str)
@@ -284,22 +298,32 @@ def show_resolutions_graph(as_repo, domain, control_resolutions, dns_resolutions
     range_x = max_x - min_x
     for node, pos in list(nodes_pos.items()):
         if isinstance(node, (ipaddress.IPv4Network, ipaddress.IPv6Network)):
-            nodes_pos[node] = (min_x + range_x * 0.5 + (pos[0] - min_x) * 0.3, pos[1])
+            nodes_pos[node] = (min_x + range_x * 0.5 +
+                               (pos[0] - min_x) * 0.3, pos[1])
         else:
-            nodes_pos[node] = (min_x + range_x * 0.1 + (pos[0] - min_x) * 0.3, pos[1])
+            nodes_pos[node] = (min_x + range_x * 0.1 +
+                               (pos[0] - min_x) * 0.3, pos[1])
     nodes_pos[domain] = (min_x, nodes_pos[domain][1])
     for asys in ases:
         nodes_pos[asys] = (max_x, nodes_pos[asys][1])
-    networkx.draw_networkx_nodes(graph, nodelist=cnames, pos=nodes_pos, node_color="b")
-    networkx.draw_networkx_nodes(graph, nodelist=ip_nets - bad_nodes, pos=nodes_pos, node_color="gray")
+    networkx.draw_networkx_nodes(
+        graph, nodelist=cnames, pos=nodes_pos, node_color="b")
+    networkx.draw_networkx_nodes(
+        graph, nodelist=ip_nets - bad_nodes, pos=nodes_pos, node_color="gray")
     networkx.draw_networkx_labels(graph, pos=nodes_pos, font_size=8)
     networkx.draw_networkx_edges(graph, pos=nodes_pos, alpha=0.25)
-    edge_labels = dict((key, " ".join(countries) if len(countries) <= 3 else "*") for key, countries in edge_countries.items())
-    networkx.draw_networkx_edge_labels(graph, edge_labels=edge_labels, pos=nodes_pos, alpha=0.5, font_size=8, label_pos=0.2)
-    networkx.draw_networkx_edges(graph, edgelist=good_edges, pos=nodes_pos, alpha=0.5, edge_color="g")
-    networkx.draw_networkx_nodes(graph, nodelist=good_nodes, pos=nodes_pos, node_color="g")
-    networkx.draw_networkx_edges(graph, edgelist=bad_edges, pos=nodes_pos, alpha=0.5, edge_color="r")
-    networkx.draw_networkx_nodes(graph, nodelist=bad_nodes, pos=nodes_pos, node_color="r")
+    edge_labels = dict((key, " ".join(countries) if len(
+        countries) <= 3 else "*") for key, countries in edge_countries.items())
+    networkx.draw_networkx_edge_labels(
+        graph, edge_labels=edge_labels, pos=nodes_pos, alpha=0.5, font_size=8, label_pos=0.2)
+    networkx.draw_networkx_edges(
+        graph, edgelist=good_edges, pos=nodes_pos, alpha=0.5, edge_color="g")
+    networkx.draw_networkx_nodes(
+        graph, nodelist=good_nodes, pos=nodes_pos, node_color="g")
+    networkx.draw_networkx_edges(
+        graph, edgelist=bad_edges, pos=nodes_pos, alpha=0.5, edge_color="r")
+    networkx.draw_networkx_nodes(
+        graph, nodelist=bad_nodes, pos=nodes_pos, node_color="r")
     pyplot.show()
 
 
@@ -324,7 +348,8 @@ def main(args):
         print("%s -> %s: %d" % (resolution[0], resolution[1], count))
 
     dns_resolutions = get_dns_results(as_repo, measurements)
-    show_resolutions_graph(as_repo, args.domain, control_resolutions, dns_resolutions)
+    show_resolutions_graph(as_repo, args.domain,
+                           control_resolutions, dns_resolutions)
 
     print("\nTESTS")
     classified_resolutions = zip(dns_resolutions,
@@ -335,36 +360,42 @@ def main(args):
             country_name = iso3166.countries.get(country_code).name
         except KeyError:
             country_name = "Unknown"
-        print("\n=============\n= %s (%s)\n=============" % (country_name, country_code))
+        print("\n=============\n= %s (%s)\n=============" %
+              (country_name, country_code))
         country_count = len(country_classifications)
-        grouped_country_classifications = group_by(country_classifications, lambda e: e[1])
+        grouped_country_classifications = group_by(
+            country_classifications, lambda e: e[1])
         for classification, entries in grouped_country_classifications.items():
             class_count = len(entries)
             prefix = "All " if class_count == country_count else ""
-            print(" %s%s: %d/%d" % (prefix, classification.name.lower(), class_count, country_count))
-        #if len(grouped_country_classifications[DnsResolutionClassification.FREE]) == country_count:
+            print(" %s%s: %d/%d" % (prefix, classification.name.lower(),
+                                    class_count, country_count))
+        # if len(grouped_country_classifications[DnsResolutionClassification.FREE]) == country_count:
         #    continue
 
         print("\n By Resolver:")
         for resolver_key, resolver_classifications in group_by(country_classifications,
-                                                      lambda e: make_resolver_key(as_repo, e[0])).items():
+                                                               lambda e: make_resolver_key(as_repo, e[0])).items():
             print("  - %s:" % resolver_key)
             resolver_count = len(resolver_classifications)
             for classification, entries in group_by(resolver_classifications, lambda e: e[1]).items():
                 class_count = len(entries)
                 prefix = "All " if class_count == resolver_count else ""
-                print("      %s%s: %d/%d" % (prefix, classification.name.lower(), class_count, resolver_count))
+                print("      %s%s: %d/%d" % (prefix,
+                                             classification.name.lower(), class_count, resolver_count))
 
         for classification, entries in grouped_country_classifications.items():
-            if classification == DnsResolutionClassification.EMPTY or not entries: continue
+            if classification == DnsResolutionClassification.EMPTY or not entries:
+                continue
             print("\n %s resolutions:" % classification.name)
             displayed = set()
             for resolution, _ in entries:
-                display_str = ",\n     ".join(["%s (%s)" % (resolve_ip(ip) or ip, as_str(as_repo.get_as_for_ip(ip))) for ip in sorted(resolution.ips)])
+                display_str = ",\n     ".join(["%s (%s)" % (resolve_ip(ip) or ip, as_str(
+                    as_repo.get_as_for_ip(ip))) for ip in sorted(resolution.ips)])
                 if display_str in displayed:
                     continue
                 print("  - [%s] %s\n     => %s" % (display_str, resolution.url.geturl(),
-                      path_get(resolution.measurement, ["test_keys", "requests", "failure"])))
+                                                   path_get(resolution.measurement, ["test_keys", "requests", "failure"])))
                 displayed.add(display_str)
                 # print(json.dumps(resolution.measurement, indent=4, sort_keys=True))
 

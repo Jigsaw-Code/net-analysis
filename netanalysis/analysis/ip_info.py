@@ -25,11 +25,13 @@ import netanalysis.autonomous_system.simple_autonomous_system as sas
 from netanalysis.autonomous_system import model
 from netanalysis.dns import domain_ip_validator
 
+
 def resolve_ip(ip) -> str:
     try:
         return socket.gethostbyaddr(ip.compressed)[0]
     except socket.herror:
         return None
+
 
 def main(args):
     ip_address = args.ip_address[0]
@@ -38,7 +40,8 @@ def main(args):
     print("ASN:  %d (%s)" % (asys.id, asys.name))
     # AS Type is is experimental and outdated data.
     print("Type: %s" % asys.type.name)
-    print("Org:  %s (country: %s, name: %s)" % (asys.org.id, asys.org.country, asys.org.name))
+    print("Org:  %s (country: %s, name: %s)" %
+          (asys.org.id, asys.org.country, asys.org.name))
     if ip_address.is_global:
         hostname = resolve_ip(ip_address)
         if hostname:
@@ -47,9 +50,11 @@ def main(args):
         print("IP in not global")
     validator = domain_ip_validator.DomainIpValidator()
     try:
-        cert = asyncio.get_event_loop().run_until_complete(validator.get_cert(None, ip_address))
+        cert = asyncio.get_event_loop().run_until_complete(
+            validator.get_cert(None, ip_address))
         if cert:
-            print("TLS Certificate:\n%s" % pprint.pformat(cert, width=100, compact=True))
+            print("TLS Certificate:\n%s" %
+                  pprint.pformat(cert, width=100, compact=True))
     except Exception as e:
         print("TLS Certificate: %s" % repr(e))
 

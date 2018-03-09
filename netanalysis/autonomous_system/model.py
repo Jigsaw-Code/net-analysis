@@ -18,7 +18,9 @@ import abc
 from collections import namedtuple
 from enum import Enum
 
-AsOrg = namedtuple("AsOrg", ["id", "name", "country", "source", "date_changed_str"])
+AsOrg = namedtuple(
+    "AsOrg", ["id", "name", "country", "source", "date_changed_str"])
+
 
 class AsType(Enum):
     UNKNOWN = 0
@@ -30,10 +32,13 @@ class AsType(Enum):
 class AutonomousSystem(abc.ABC):
     @abc.abstractmethod
     def id(self) -> int: pass
+
     @abc.abstractmethod
     def name(self) -> str: pass
+
     @abc.abstractmethod
     def org(self) -> AsOrg: pass
+
     @abc.abstractmethod
     def type(self) -> AsType: pass
 

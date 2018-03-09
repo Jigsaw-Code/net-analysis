@@ -24,9 +24,11 @@ from netanalysis.dns import model
 def to_json(value):
     return value
 
+
 @to_json.register(List)
 def _(value):
     return [to_json(e) for e in value]
+
 
 @to_json.register(model.IpAddressData)
 def _(data):
@@ -70,8 +72,9 @@ def record_data_from_json(data_json: Dict) -> model.RecordData:
         return model.CnameData(data_json["cname"])
     else:
         raise ValueError("Invalid RecordData json: %s" %
-                            json.dumps(data_json))
-    
+                         json.dumps(data_json))
+
+
 def record_from_json(record_json: Dict) -> model.ResourceRecord:
     params = {}
     for key, value in record_json.items():

@@ -32,9 +32,10 @@ class DomainIpValidator:
             if self._ssl_context.check_hostname != True:
                 raise ValueError("SSLContext.check_hostname must be False")
         else:
-            self._ssl_context = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
+            self._ssl_context = ssl.create_default_context(
+                purpose=ssl.Purpose.SERVER_AUTH)
             self._ssl_context.check_hostname = False
-    
+
     async def get_cert(self, domain: str, ip: str, timeout=2.0):
         ip = str(ip)
         transport, _proto = await asyncio.wait_for(self._loop.create_connection(

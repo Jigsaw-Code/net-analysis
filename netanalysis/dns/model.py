@@ -79,6 +79,6 @@ class DnsMeasurement:
         self.client_country = client_country
         self.provenance = provenance
         self.trust_reason = trust_reason
-    
+
     def __repr__(self):
         return "DnsMeasurement(%s)" % str(self.__dict__)

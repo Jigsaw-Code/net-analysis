@@ -20,6 +20,7 @@ from typing import Set
 import networkx as nx
 from numpy.random import RandomState
 
+
 class EdgeClass(Enum):
     UNKNOWN = 0
     GOOD = 1
@@ -138,8 +139,10 @@ def draw_graph(graph: nx.DiGraph):
 
     nodes_pos = nx.spring_layout(graph, random_state=RandomState(0))
     nx.draw_networkx_nodes(graph, pos=nodes_pos, alpha=0.6, node_color="gray")
-    nx.draw_networkx_nodes(graph, pos=nodes_pos, alpha=0.8, nodelist=good_nodes, node_color="g")
-    nx.draw_networkx_nodes(graph, pos=nodes_pos, alpha=0.8, nodelist=bad_nodes, node_color="r")
+    nx.draw_networkx_nodes(graph, pos=nodes_pos, alpha=0.8,
+                           nodelist=good_nodes, node_color="g")
+    nx.draw_networkx_nodes(graph, pos=nodes_pos, alpha=0.8,
+                           nodelist=bad_nodes, node_color="r")
     nx.draw_networkx_labels(graph, pos=nodes_pos, font_size=8)
     nx.draw_networkx_edges(graph, pos=nodes_pos, alpha=0.25)
     nx.draw_networkx_edges(graph, edgelist=good_edges,
