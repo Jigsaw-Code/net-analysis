@@ -29,7 +29,7 @@ class TestAsRepository(unittest.TestCase):
         as_repo = sas.InMemoryAsRepository(NoneIpToAsnMap())
         asys = as_repo.get_as(999)
         self.assertIsNotNone(asys)
-        self.assertEqual(999, asys.id)
+        self.assertEqual(999, asys.number)
         self.assertEqual("AS999", asys.name)
 
     def test_unknown_org(self):
@@ -40,9 +40,9 @@ class TestAsRepository(unittest.TestCase):
 
     def test_add_as(self):
         as_repo = sas.InMemoryAsRepository(NoneIpToAsnMap)
-        as_repo.add_as("AS1", "First AS", "org1", "test_data", "sometime")
-        as1 = as_repo.get_as("AS1")
-        self.assertEqual("AS1", as1.id)
+        as_repo.add_as(1, "First AS", "org1", "test_data", "sometime")
+        as1 = as_repo.get_as(1)
+        self.assertEqual(1, as1.number)
         self.assertEqual("First AS", as1.name)
         self.assertEqual("org1", as1.org.id)
 
@@ -57,10 +57,10 @@ class TestAsRepository(unittest.TestCase):
 
     def test_as_org(self):
         as_repo = sas.InMemoryAsRepository(NoneIpToAsnMap)
-        as_repo.add_as("AS1", "First AS", "org1", "test_data", "sometime")
+        as_repo.add_as(1, "First AS", "org1", "test_data", "sometime")
         as_repo.add_org("org1", "First Org", "Country1",
                         "test_data", "sometime")
-        org = as_repo.get_as("AS1").org
+        org = as_repo.get_as(1).org
         self.assertEqual("org1", org.id)
         self.assertEqual("First Org", org.name)
         self.assertEqual("Country1", org.country)

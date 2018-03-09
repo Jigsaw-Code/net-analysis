@@ -275,7 +275,7 @@ def show_resolutions_graph(as_repo, domain, control_resolutions, dns_resolutions
                     ip_net = ipaddress.ip_network(
                         ip_address).supernet(new_prefix=22)
                     asys = as_repo.get_as_for_ip(ip_address)
-                    as_str = asys.name or str(asys.id)
+                    as_str = asys.name or str(asys.number)
                     ases.add(as_str)
                     graph.add_edge(ip_net, as_str)
                     if not ip_address.is_global:

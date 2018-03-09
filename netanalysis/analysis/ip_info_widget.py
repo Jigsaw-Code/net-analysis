@@ -54,7 +54,7 @@ def create_ip_info_widget(as_repo):
                 return
         asys = as_repo.get_as_for_ip(ip_address)  # type: model.AutonomousSytem
         with output:
-            print("ASN:  %d (%s)" % (asys.id, asys.name))
+            print("ASN:  %d (%s)" % (asys.number, asys.name))
             # AS Type is is experimental and outdated data.
             print("Type: %s" % asys.type.name)
             print("Org:  %s (country: %s, name: %s)" %
