@@ -14,21 +14,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+This module provides a simple in-memmory implementation of an AutonomousSystem
+and utilities to load it with Maxmind and Caida data.
+"""
+
 import abc
 import gzip
 from typing import Dict
 
 import geoip2.database
 
-import netanalysis.model.autonomous_system as model
+from . import model
 from netanalysis.infrastructure.resources import resource_filename
 
 
 class SimpleAutonomousSystem(model.AutonomousSystem):
     def __init__(self, as_repo: model.AsRepository, as_number: int, as_name: str, org_id: str,
                  source: str, date_changed_str: str) -> None:
+        if type(as_number) != int:
+            raise ValueError("as_number must be an int. Got %s" % repr(as_number))
         self._as_repo = as_repo
-        self._id = as_number
+        self._number = as_number
         self._name = as_name
         self._org_id = org_id
         self.source = source
@@ -36,7 +43,7 @@ class SimpleAutonomousSystem(model.AutonomousSystem):
         self._type = model.AsType.UNKNOWN
 
     @property
-    def id(self): return self._id
+    def number(self): return self._number
 
     @property
     def name(self): return self._name
@@ -56,6 +63,8 @@ class SimpleAutonomousSystem(model.AutonomousSystem):
 
 
 def UnknownAutonomousSystem(as_repo, as_number):
+    if type(as_number) != int:
+        raise ValueError("as_number must be an int. Got %s" % repr(as_number))
     return SimpleAutonomousSystem(as_repo, as_number, "AS%d" % as_number, None, None, None)
 
 
@@ -88,6 +97,8 @@ class InMemoryAsRepository(model.AsRepository):
 
     def add_as(self, as_number: int, as_name: str, org_id: str,
                source: str, date_changed_str: str) -> None:
+        if type(as_number) != int:
+            raise ValueError("as_number must be an int. Got %s" % repr(as_number))
         self.id_as[as_number] = SimpleAutonomousSystem(
             self, as_number, as_name, org_id, source, date_changed_str)
 
@@ -97,6 +108,8 @@ class InMemoryAsRepository(model.AsRepository):
             org_id, org_name, org_country, source, date_changed_str)
 
     def get_as(self, as_number: int) -> model.AutonomousSystem:
+        if type(as_number) != int:
+            raise ValueError("as_number must be an int. Got %s" % repr(as_number))
         autonomous_system = self.id_as.get(as_number)
         if not autonomous_system:
             return UnknownAutonomousSystem(self, as_number)

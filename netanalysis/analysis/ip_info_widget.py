@@ -21,20 +21,8 @@ import socket
 
 import ipywidgets as widgets
 
-from netanalysis.dns import domain_ip_validator
-import netanalysis.model.autonomous_system as model
-
-
-# TODO: Remove duplication with ip_info.py
-
-def resolve_ip(ip) -> str:
-    try:
-        return socket.gethostbyaddr(ip.compressed)[0]
-    except socket.herror:
-        return None
-
-
-VALIDATOR = domain_ip_validator.DomainIpValidator()
+from netanalysis.autonomous_system import model
+import netanalysis.ip.info as ip_info
 
 
 def create_ip_info_widget(as_repo):
@@ -54,20 +42,20 @@ def create_ip_info_widget(as_repo):
                 return
         asys = as_repo.get_as_for_ip(ip_address)  # type: model.AutonomousSytem
         with output:
-            print("ASN:  %d (%s)" % (asys.id, asys.name))
+            print("ASN:  %d (%s)" % (asys.number, asys.name))
             # AS Type is is experimental and outdated data.
             print("Type: %s" % asys.type.name)
             print("Org:  %s (country: %s, name: %s)" %
                   (asys.org.id, asys.org.country, asys.org.name))
             if ip_address.is_global:
-                hostname = resolve_ip(ip_address)
+                hostname = ip_info.resolve_ip(ip_address)
                 if hostname:
                     print("Hostname: %s" % hostname)
             else:
                 print("IP is not global")
             try:
                 cert = asyncio.get_event_loop().run_until_complete(
-                    VALIDATOR.get_cert(None, ip_address))
+                    ip_info.get_tls_certificate(ip_address))
                 if cert:
                     print("TLS Certificate:\n%s" %
                           pprint.pformat(cert, width=100, compact=True))

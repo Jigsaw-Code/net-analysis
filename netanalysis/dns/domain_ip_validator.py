@@ -14,7 +14,6 @@
 
 import argparse
 import asyncio
-import certifi
 import ipaddress
 import logging
 import pprint
@@ -22,44 +21,27 @@ import socket
 import ssl
 import sys
 
-_SSL_CONTEXT = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH, cafile=certifi.where())
-_SSL_CONTEXT.check_hostname = False
+import netanalysis.ip.info as ip_info
 
-class DomainIpValidator:
-    def __init__(self, loop: asyncio.AbstractEventLoop=asyncio.get_event_loop()) -> None:
-        self._loop = loop
-    
-    async def get_cert(self, domain: str, ip: str, timeout=2.0):
-        ip = str(ip)
-        transport, _proto = await asyncio.wait_for(self._loop.create_connection(
-            asyncio.Protocol,
-            host=ip,
-            port=443,
-            ssl=_SSL_CONTEXT,
-            server_hostname=domain), timeout)
-        transport.close()
-        return transport.get_extra_info("peercert")
-
-    async def validate_ip(self, domain: str, ip: str, timeout=2.0):
-        """
-           Returns successfully if the IP is valid for the domain.
-           Raises exception if the validation fails.
-        """
-        cert = await self.get_cert(domain, ip, timeout)
-        if logging.getLogger().isEnabledFor(logging.DEBUG):
-            logging.debug("Certificate:\n{}".format(pprint.pformat(cert)))
-        ssl.match_hostname(cert, domain)
+async def validate_ip(domain: str, ip: ip_info.IpAddress, timeout=2.0):
+    """
+    Returns successfully if the IP is valid for the domain.
+    Raises exception if the validation fails.
+    """
+    cert = await ip_info.get_tls_certificate(ip, domain, timeout=timeout)
+    if logging.getLogger().isEnabledFor(logging.DEBUG):
+        logging.debug("Certificate:\n{}".format(pprint.pformat(cert)))
+    ssl.match_hostname(cert, domain)
 
 
 def main(args):
     logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
 
-    validator = DomainIpValidator()
     all_good = True
     for ip_address in args.ip_address:
         try:
             asyncio.get_event_loop().run_until_complete(
-                validator.validate_ip(args.domain, str(ip_address), timeout=args.timeout))
+                validate_ip(args.domain, ip_address, timeout=args.timeout))
             result_str = "VALID"
         except (ssl.CertificateError, ConnectionRefusedError, OSError, asyncio.TimeoutError) as e:
             all_good = False

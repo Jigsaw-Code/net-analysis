@@ -12,20 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Modelling of DNS concepts.
+"""
+
 import datetime
 from ipaddress import ip_address, IPv4Address, IPv6Address
 from typing import List, Union
 
 
 class RecordData:
-    """Represents the data in a DNS Resource Record."""
+    "Represents the data in a DNS Resource Record."
 
     def __repr__(self):
         return "%s(%s)" % (self.__class__, str(self.__dict__))
 
 
 class IpAddressData(RecordData):
-    """Data for Resource Record type A or AAAA"""
+    "Data for Resource Record type A or AAAA"
 
     def __init__(self, ip_str: str) -> None:
         self._ip = ip_address(ip_str)
@@ -36,7 +40,7 @@ class IpAddressData(RecordData):
 
 
 class CnameData(RecordData):
-    """Data for Resource Record type CNAME"""
+    "Data for Resource Record type CNAME"
 
     def __init__(self, cname: str) -> None:
         self._cname = cname
@@ -47,7 +51,9 @@ class CnameData(RecordData):
 
 
 class ResourceRecord:
-    def __init__(self, name: str, data: RecordData, ttl: datetime.timedelta=None) -> None:
+    "A DNS Resource Record"
+
+    def __init__(self, name: str, data: RecordData, ttl: datetime.timedelta = None) -> None:
         if not name:
             raise ValueError("ResourceRecord requires name")
         self.name = name
@@ -62,15 +68,17 @@ class ResourceRecord:
 
 
 class DnsMeasurement:
+    "A recorded instance of a DNS query and response"
+
     def __init__(self,
                  measurement_id: str,
                  time: datetime.datetime,
                  records: List[ResourceRecord],
-                 resolver_ip: Union[IPv4Address, IPv6Address]=None,
-                 client_asn: int=None,
-                 client_country: str=None,
-                 provenance: str=None,
-                 trust_reason: str=None) -> None:
+                 resolver_ip: Union[IPv4Address, IPv6Address] = None,
+                 client_asn: int = None,
+                 client_country: str = None,
+                 provenance: str = None,
+                 trust_reason: str = None) -> None:
         self.measurement_id = measurement_id
         self.time = time
         self.records = records
@@ -79,6 +87,6 @@ class DnsMeasurement:
         self.client_country = client_country
         self.provenance = provenance
         self.trust_reason = trust_reason
-    
+
     def __repr__(self):
         return "DnsMeasurement(%s)" % str(self.__dict__)

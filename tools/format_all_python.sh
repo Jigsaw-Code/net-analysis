@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/bin/bash -eu
 #
 # Copyright 2018 Jigsaw Operations LLC
 #
@@ -14,16 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os.path
+# Formats all Python files in-place using autopep8
 
-# Assumes this module is in cwm/infrastructure
-_PACKAGE_DIR = os.path.dirname(__file__)
-assert (_PACKAGE_DIR.split(os.path.sep)[-2:] == ["netanalysis", "infrastructure"]), \
-    "resources.py in invalid directory %s" % _PACKAGE_DIR
-
-_RESOURCES_ROOT = os.path.normpath(os.path.join(_PACKAGE_DIR, "..", ".."))
-
-
-def resource_filename(resource_path: str) -> str:
-    filesystem_path = os.path.join(*resource_path.split("/"))
-    return os.path.join(_RESOURCES_ROOT, filesystem_path)
+.venv/bin/autopep8 --recursive netanalysis --in-place

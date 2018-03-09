@@ -14,13 +14,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Modelling of BGP Autonomous Systems and related concepts.
+"""
+
 import abc
 from collections import namedtuple
 from enum import Enum
 
-AsOrg = namedtuple("AsOrg", ["id", "name", "country", "source", "date_changed_str"])
+AsOrg = namedtuple(
+    "AsOrg", ["id", "name", "country", "source", "date_changed_str"])
+
 
 class AsType(Enum):
+    "Type of the Autonomous System"
     UNKNOWN = 0
     CONTENT = 1
     ENTERPRISE = 1
@@ -28,21 +35,41 @@ class AsType(Enum):
 
 
 class AutonomousSystem(abc.ABC):
+    """
+    Represents an Autonomous System on the Internet
+    """
+
     @abc.abstractmethod
-    def id(self) -> int: pass
+    def number(self) -> int:
+        "The number of this AS"
+        pass
+
     @abc.abstractmethod
-    def name(self) -> str: pass
+    def name(self) -> str:
+        "The name of this AS"
+        pass
+
     @abc.abstractmethod
-    def org(self) -> AsOrg: pass
+    def org(self) -> AsOrg:
+        "The organization that owns this AS"
+        pass
+
     @abc.abstractmethod
-    def type(self) -> AsType: pass
+    def type(self) -> AsType:
+        "The type of this AS"
+        pass
 
 
 class AsRepository(abc.ABC):
+    """
+    Provides ways to query for ASes.
+    """
     @abc.abstractmethod
     def get_as(self, as_number: int) -> AutonomousSystem:
+        "Gets the AS with the given number"
         pass
 
     @abc.abstractmethod
     def get_as_for_ip(self, ip_address_str: str) -> AutonomousSystem:
+        "Gets the AS that owns the given IP address"
         pass
