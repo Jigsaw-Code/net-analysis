@@ -14,6 +14,7 @@
 
 import argparse
 import asyncio
+from collections import namedtuple
 from concurrent.futures import Executor, ThreadPoolExecutor
 from functools import singledispatch
 import gzip
@@ -102,6 +103,14 @@ def _(json_list: list, max_string_size: int):
     return json_list
 
 
+ReportFilenameParts = namedtuple(
+    "ReportFilenameParts", ["timestamp", "country", "asn", "test_name"])
+
+
+def parse_report_filename(report_filename):
+    return ReportFilenameParts(*report_filename.split("-")[:4])
+
+
 async def main(args):
     LOGGER.setLevel(logging.DEBUG if args.debug else logging.INFO)
 
@@ -110,14 +119,17 @@ async def main(args):
     s3 = boto3.resource("s3")  # type: boto3.resources.base.ServiceResource
     s3.meta.client.meta.events.register('choose-signer.s3.*', disable_signing)
     bucket = s3.Bucket("ooni-data")
-    with ThreadPoolExecutor(10) as executor:
+    with ThreadPoolExecutor() as executor:
         ooni_client = S3OoniClient(
             bucket, "autoclaved/jsonl.tar.lz4", executor)
 
         file_tasks = []
-        async for file_path in atop_n(ooni_client.list_files(
-                test_name=args.test_name, start_date=args.start_date), args.limit):
-            def file_path_to_lines(file_path):
+        file_paths = ooni_client.list_files(
+            test_name=args.test_name, start_date=args.start_date)
+        if args.limit:
+            file_paths = atop_n(file_paths, args.limit)
+        async for file_path in file_paths:
+            def file_path_to_lines(file_path, country_restrict):
                 s3_file = ooni_client.fetch_file(file_path)
                 if file_path.suffix == ".lz4":
                     file_path = file_path.with_name(file_path.stem)
@@ -125,18 +137,25 @@ async def main(args):
 
                 with s3_file:
                     if file_path.suffix == ".json":
+                        parsed_filename = parse_report_filename(file_path.name)
+                        if country_restrict and parsed_filename.country != country_restrict:
+                            return
+
                         with s3_file:
                             for line in s3_file:
                                 yield line
                     elif file_path.suffix == ".tar":
                         with tarfile.open(fileobj=s3_file, mode="r|") as tar_file:
                             for entry in tar_file:
+                                parsed_filename = parse_report_filename(
+                                    pathlib.PurePosixPath(entry.name).name)
+                                if country_restrict and parsed_filename.country != country_restrict:
+                                    continue
                                 for line in tar_file.extractfile(entry):
                                     yield line
 
-            def save_measurement(measurement):
+            def save_measurement(measurement, domain):
                 measurement_id = measurement["id"]
-                domain = urlparse(measurement["input"]).hostname
                 country = measurement["probe_cc"]
                 if not measurement_id or not domain or not country:
                     LOGGER.warning(
@@ -149,14 +168,16 @@ async def main(args):
                     json.dump(measurement, file)
                 LOGGER.debug("Wrote %s", out_filename)
 
-            def process_s3_file_path(file_path):
-                for line in file_path_to_lines(file_path):
-                    measurement = _trim_json(
-                        json.loads(line, encoding="utf-8"), 1000)
-                    save_measurement(measurement)
+            def process_s3_file_path(file_path, country_restrict, domain_restrict):
+                for line in file_path_to_lines(file_path, country_restrict):
+                    measurement = json.loads(line, encoding="utf-8")
+                    domain = urlparse(measurement["input"]).hostname
+                    if domain_restrict and domain != domain_restrict:
+                        continue
+                    save_measurement(_trim_json(measurement, 1000), domain)
 
             file_tasks.append(asyncio.get_event_loop().run_in_executor(
-                executor, process_s3_file_path, file_path))
+                executor, process_s3_file_path, file_path, args.country, args.domain))
         await asyncio.gather(*file_tasks)
 
 
@@ -167,6 +188,9 @@ if __name__ == "__main__":
     parser.add_argument("--test_name", type=str, default="web_connectivity")
     parser.add_argument("--limit", type=int, default=100)
     parser.add_argument("--start_date", type=str)
+    parser.add_argument("--country", type=str)
+    # Domain restriction is slow!
+    parser.add_argument("--domain", type=str)
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
     sys.exit(asyncio.get_event_loop().run_until_complete(
