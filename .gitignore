@@ -10,7 +10,10 @@ Pipfile
 # Bazel output
 /bazel-*
 
+# Data
+/measurements
 /ooni_data
+/s3
 .DS_Store
 
 # IDEs
