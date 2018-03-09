@@ -21,8 +21,8 @@ import socket
 
 import ipywidgets as widgets
 
+from netanalysis.autonomous_system import model
 from netanalysis.dns import domain_ip_validator
-import netanalysis.model.autonomous_system as model
 
 
 # TODO: Remove duplication with ip_info.py

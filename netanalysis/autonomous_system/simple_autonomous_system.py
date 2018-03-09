@@ -20,7 +20,7 @@ from typing import Dict
 
 import geoip2.database
 
-import netanalysis.model.autonomous_system as model
+from . import model
 from netanalysis.infrastructure.resources import resource_filename
 
 

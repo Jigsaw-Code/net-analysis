@@ -21,9 +21,9 @@ import pprint
 import socket
 import sys
 
-import netanalysis.analysis.simple_autonomous_system as sas
+import netanalysis.autonomous_system.simple_autonomous_system as sas
+from netanalysis.autonomous_system import model
 from netanalysis.dns import domain_ip_validator
-import netanalysis.model.autonomous_system as model
 
 def resolve_ip(ip) -> str:
     try:

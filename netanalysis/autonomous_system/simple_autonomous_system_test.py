@@ -16,7 +16,7 @@
 
 import unittest
 
-import simple_autonomous_system as sas
+from . import simple_autonomous_system as sas
 
 
 class NoneIpToAsnMap(sas.IpToAsnMap):
