@@ -17,7 +17,7 @@
 import ipaddress
 import unittest
 
-import google_dns as gdns
+from . import google_dns as gdns
 
 
 class TestGoogleDns(unittest.TestCase):
