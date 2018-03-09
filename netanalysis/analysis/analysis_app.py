@@ -83,7 +83,6 @@ class DomainApp:
         return ips
 
     def tls_verify_unknowns(self):
-        validator = domain_ip_validator.DomainIpValidator()
         # Try short domains first: they usually validate CNAMES, which tend to be longer.
         for domain, target in sorted(self.classifier.class_graph.edges(), key=lambda e: (len(e[0]), e[1])):
             if self.classifier.get_class(domain, target) != dc.EdgeClass.UNKNOWN:
@@ -97,7 +96,8 @@ class DomainApp:
             for ip in list(self.get_ips(net))[:2]:
                 print("    Validating {}: ".format(ip), end="")
                 try:
-                    asyncio.get_event_loop().run_until_complete(validator.validate_ip(domain, ip))
+                    asyncio.get_event_loop().run_until_complete(
+                        domain_ip_validator.validate_ip(domain, ip))
                     print("VALID")
                     self.classifier.add_good_edge(
                         domain, net, "Pass TLS validation")
