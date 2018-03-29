@@ -168,7 +168,7 @@ def fill_as_type_from_file(as_type_file, as_repo: InMemoryAsRepository):
 
 def create_default_ip_asn_map() -> IpToAsnMap:
     filename = resource_filename(
-        "third_party/maxmind/GeoLite2-ASN_20171031/GeoLite2-ASN.mmdb")
+        "third_party/maxmind/GeoLite2-ASN_20180327/GeoLite2-ASN.mmdb")
     return GeoIp2IpToAsnMap(geoip2.database.Reader(filename))
 
 
