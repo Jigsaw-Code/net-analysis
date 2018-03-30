@@ -17,6 +17,10 @@
 import abc
 from collections import namedtuple
 from enum import Enum
+import ipaddress
+from typing import Union
+
+IpAddress = Union[ipaddress.IPv4Address, ipaddress.IPv6Address]
 
 AsOrg = namedtuple("AsOrg", ["id", "name", "country", "source", "date_changed_str"])
 

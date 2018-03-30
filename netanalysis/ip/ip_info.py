@@ -36,54 +36,47 @@ from . import model
 from . import simple_autonomous_system as sas
 
 
-class IpToAsnMap(abc.ABC):
-    @abc.abstractmethod
-    def get_asn(self, ip: ipaddress):
-        pass
-
-
-class GeoIp2IpToAsnMap(IpToAsnMap):
-    def __init__(self, geopi2_reader):
-        self._geoip2_reader = geopi2_reader
-
-    def get_asn(self, ip: ipaddress):
-        try:
-            return self._geoip2_reader.asn(ip.compressed).autonomous_system_number
-        except:
-            return -1
-
-
 class IpInfoService:
-    def __init__(self, ip_asn: IpToAsnMap, as_repo: model.AsRepository):
-        self._ip_asn = ip_asn
+    def __init__(self, as_repo: model.AsRepository, geoip2_asn, geoip2_country):
         self._as_repo = as_repo
+        self._geoip2_asn = geoip2_asn
+        self._geoip2_country = geoip2_country
     
-    def get_as(self, ip: ipaddress) -> model.AutonomousSystem:
-        asn = self._ip_asn.get_asn(ip)
+    def get_as(self, ip: model.IpAddress) -> model.AutonomousSystem:
+        try:
+            asn = self._geoip2_asn.asn(ip.compressed).autonomous_system_number
+        except:
+            asn = -1
         return self._as_repo.get_as(asn)
     
-    def resolve_ip(self, ip: ipaddress) -> str:
+    def get_country(self, ip: model.IpAddress) -> (str, str):
+        "Returns country code and country name for the IP"
+        # TODO: Consider exposing the confidence value
+        country_record = self._geoip2_country.country(
+            ip.compressed).country  # type: geoip2.records.Country
+        return (country_record.iso_code, country_record.name)
+
+    def resolve_ip(self, ip: model.IpAddress) -> str:
         try:
             return socket.gethostbyaddr(ip.compressed)[0]
         except socket.herror:
             return None        
 
 
-def create_default_ip_asn_map() -> IpToAsnMap:
-    filename = resource_filename(
-        "third_party/maxmind/GeoLite2-ASN_20180327/GeoLite2-ASN.mmdb")
-    return GeoIp2IpToAsnMap(geoip2.database.Reader(filename))
-
-
 def create_default_ip_info_service() -> IpInfoService:
     as_repo = sas.create_default_as_repo()
-    return IpInfoService(create_default_ip_asn_map(), as_repo)
+    ip_asn = geoip2.database.Reader(resource_filename(
+        "third_party/maxmind/GeoLite2-ASN_20180327/GeoLite2-ASN.mmdb"))
+    ip_country = geoip2.database.Reader(resource_filename(
+        "third_party/maxmind/GeoLite2-Country_20180327/GeoLite2-Country.mmdb"))
+    return IpInfoService(as_repo, ip_asn, ip_country)
 
 
 def main(args):
     ip_info = create_default_ip_info_service()
     
     ip_address = args.ip_address[0]
+    print("Country:  %s (%s)" % ip_info.get_country(ip_address))
     asys = ip_info.get_as(ip_address)  # type: model.AutonomousSytem
     print("ASN:  %d (%s)" % (asys.id, asys.name))
     # AS Type is is experimental and outdated data.
