@@ -54,7 +54,7 @@ class IpInfoService:
         # TODO: Consider exposing the confidence value
         country_record = self._geoip2_country.country(
             ip.compressed).country  # type: geoip2.records.Country
-        return (country_record.iso_code, country_record.name)
+        return (str(country_record.iso_code), str(country_record.name))
 
     def resolve_ip(self, ip: model.IpAddress) -> str:
         try:
