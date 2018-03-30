@@ -42,7 +42,3 @@ class AsRepository(abc.ABC):
     @abc.abstractmethod
     def get_as(self, as_number: int) -> AutonomousSystem:
         pass
-
-    @abc.abstractmethod
-    def get_as_for_ip(self, ip_address_str: str) -> AutonomousSystem:
-        pass

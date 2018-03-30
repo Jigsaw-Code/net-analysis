@@ -20,9 +20,9 @@ from typing import Dict
 
 import geoip2.database
 
-import netanalysis.model.autonomous_system as model
 from netanalysis.infrastructure.resources import resource_filename
 
+from . import model
 
 class SimpleAutonomousSystem(model.AutonomousSystem):
     def __init__(self, as_repo: model.AsRepository, as_number: int, as_name: str, org_id: str,
@@ -63,28 +63,11 @@ def UnknownAsOrg(org_id):
     return model.AsOrg(org_id, org_id, None, None, None)
 
 
-class IpToAsnMap(abc.ABC):
-    @abc.abstractmethod
-    def get_asn(self, ip_address_str):
-        pass
-
-
-class GeoIp2IpToAsnMap(IpToAsnMap):
-    def __init__(self, geopi2_reader):
-        self._geoip2_reader = geopi2_reader
-
-    def get_asn(self, ip_address_str):
-        try:
-            return self._geoip2_reader.asn(ip_address_str).autonomous_system_number
-        except:
-            return -1
-
 
 class InMemoryAsRepository(model.AsRepository):
-    def __init__(self, ip_asn_map: IpToAsnMap) -> None:
+    def __init__(self) -> None:
         self.id_as = {}  # type: Dict[int, model.AutonomousSystem]
         self.id_org = {}  # type: Dict[str, model.AsOrg]
-        self._ip_asn_map = ip_asn_map
 
     def add_as(self, as_number: int, as_name: str, org_id: str,
                source: str, date_changed_str: str) -> None:
@@ -107,10 +90,6 @@ class InMemoryAsRepository(model.AsRepository):
         if not org:
             return UnknownAsOrg(org_id)
         return org
-
-    def get_as_for_ip(self, ip_address_str: str) -> model.AutonomousSystem:
-        as_number = self._ip_asn_map.get_asn(ip_address_str)
-        return self.get_as(as_number)
 
 
 def fill_as_info_from_filename(as_org_filename: str, as_repo: InMemoryAsRepository):
@@ -166,14 +145,8 @@ def fill_as_type_from_file(as_type_file, as_repo: InMemoryAsRepository):
             asys.type = str_to_type[as_type_str]
 
 
-def create_default_ip_asn_map() -> IpToAsnMap:
-    filename = resource_filename(
-        "third_party/maxmind/GeoLite2-ASN_20180327/GeoLite2-ASN.mmdb")
-    return GeoIp2IpToAsnMap(geoip2.database.Reader(filename))
-
-
 def create_default_as_repo() -> InMemoryAsRepository:
-    as_repo = InMemoryAsRepository(create_default_ip_asn_map())
+    as_repo = InMemoryAsRepository()
 
     as_info_filename = resource_filename(
         "third_party/caida.org/as-organizations/20170401.as-org2info.txt.gz")

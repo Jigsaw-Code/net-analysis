@@ -22,22 +22,14 @@ import socket
 import ipywidgets as widgets
 
 from netanalysis.dns import domain_ip_validator
-import netanalysis.model.autonomous_system as model
-
-
-# TODO: Remove duplication with ip_info.py
-
-def resolve_ip(ip) -> str:
-    try:
-        return socket.gethostbyaddr(ip.compressed)[0]
-    except socket.herror:
-        return None
+from netanalysis.ip import ip_info as ii
+from netanalysis.ip import model
 
 
 VALIDATOR = domain_ip_validator.DomainIpValidator()
 
 
-def create_ip_info_widget(as_repo):
+def create_ip_info_widget(ip_info: ii.IpInfoService):
     ip_field = widgets.Text(placeholder="Enter ip address", description="IP")
     get_btn = widgets.Button(description="Get info")
     output = widgets.Output()
@@ -52,7 +44,7 @@ def create_ip_info_widget(as_repo):
             with output:
                 print("Invalid IP: %s" % ip_field.value)
                 return
-        asys = as_repo.get_as_for_ip(ip_address)  # type: model.AutonomousSytem
+        asys = ip_info.get_as(ip_address)  # type: model.AutonomousSytem
         with output:
             print("ASN:  %d (%s)" % (asys.id, asys.name))
             # AS Type is is experimental and outdated data.
@@ -60,7 +52,7 @@ def create_ip_info_widget(as_repo):
             print("Org:  %s (country: %s, name: %s)" %
                   (asys.org.id, asys.org.country, asys.org.name))
             if ip_address.is_global:
-                hostname = resolve_ip(ip_address)
+                hostname = ip_info.resolve_ip(ip_address)
                 if hostname:
                     print("Hostname: %s" % hostname)
             else:

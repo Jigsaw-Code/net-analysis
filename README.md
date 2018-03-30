@@ -23,7 +23,7 @@ _Disclaimer: This is not an officially supported Jigsaw product._
 ### Get information about an IP address:
 
 ```
-.venv/bin/python -m netanalysis.analysis.ip_info 8.8.8.8
+.venv/bin/python -m netanalysis.ip.ip_info 8.8.8.8
 ```
 
 ### Check if an IP is valid for a domain:
