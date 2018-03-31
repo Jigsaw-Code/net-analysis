@@ -20,7 +20,6 @@ import argparse
 import asyncio
 from concurrent.futures import Executor, ThreadPoolExecutor
 import ipaddress
-import json
 import logging
 import os
 import ssl
@@ -30,6 +29,7 @@ from urllib.parse import urlparse
 import aiohttp
 import certifi
 import iso3166
+import ujson as json
 
 import netanalysis.ooni.ooni_client as oc
 
