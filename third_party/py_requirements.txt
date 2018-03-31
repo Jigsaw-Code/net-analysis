@@ -7,8 +7,13 @@ boto3
 cchardet
 certifi
 iso3166
-jupyter
+jupyter==1.*
 networkx
+
+# Avoid latest version 5 because of the event loop issue on 5
+# https://github.com/ipython/ipython/issues/11030
+tornado==4.*
+
 geoip2
 google-cloud-bigquery
 matplotlib
