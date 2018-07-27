@@ -28,7 +28,6 @@ import datetime
 import glob
 import ipaddress
 import itertools
-import json
 import logging
 import os
 import os.path
@@ -36,6 +35,8 @@ import pprint
 import sys
 from typing import Iterable, List
 from urllib.parse import urlparse
+
+import ujson as json
 
 from netanalysis.dns import model as dns
 from netanalysis.dns import serialization as ds

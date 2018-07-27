@@ -14,12 +14,12 @@
 
 from collections import defaultdict
 import ipaddress
-import json
 import logging
 import os
 
 from matplotlib import pyplot
 import networkx as nx
+import ujson as json
 
 import netanalysis.dns.serialization as ds
 

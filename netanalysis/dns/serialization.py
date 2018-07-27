@@ -14,8 +14,9 @@
 
 import datetime
 from functools import singledispatch
-import json
 from typing import Dict, List
+
+import ujson as json
 
 from netanalysis.dns import model
 

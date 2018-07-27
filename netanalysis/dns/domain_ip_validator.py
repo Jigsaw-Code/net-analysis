@@ -25,13 +25,10 @@ import sys
 _SSL_CONTEXT = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH, cafile=certifi.where())
 _SSL_CONTEXT.check_hostname = False
 
-class DomainIpValidator:
-    def __init__(self, loop: asyncio.AbstractEventLoop=asyncio.get_event_loop()) -> None:
-        self._loop = loop
-    
+class DomainIpValidator:   
     async def get_cert(self, domain: str, ip: str, timeout=2.0):
         ip = str(ip)
-        transport, _proto = await asyncio.wait_for(self._loop.create_connection(
+        transport, _proto = await asyncio.wait_for(asyncio.get_event_loop().create_connection(
             asyncio.Protocol,
             host=ip,
             port=443,

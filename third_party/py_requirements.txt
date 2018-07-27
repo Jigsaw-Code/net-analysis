@@ -7,7 +7,7 @@ boto3
 cchardet
 certifi
 iso3166
-jupyter
+jupyter==1.*
 networkx
 geoip2
 google-cloud-bigquery
@@ -16,3 +16,6 @@ pandas
 plotly
 pydot
 statsmodels
+# ujson is a drop-in replacement for json implemented in C++ and a lot faster:
+# https://artem.krylysov.com/blog/2015/09/29/benchmark-python-json-libraries/
+ujson

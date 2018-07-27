@@ -37,7 +37,6 @@ from collections import Counter, defaultdict
 from enum import Enum
 import glob
 import ipaddress
-import json
 import logging
 import os.path
 import random
@@ -49,6 +48,7 @@ from urllib.parse import urlparse
 import iso3166
 import matplotlib.pyplot as pyplot
 import networkx
+import ujson as json
 
 import netanalysis.analysis.simple_autonomous_system as sas
 import netanalysis.model.autonomous_system as autonomous_system

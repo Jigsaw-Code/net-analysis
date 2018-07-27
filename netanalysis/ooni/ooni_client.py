@@ -19,7 +19,6 @@ import asyncio
 from collections import deque
 from concurrent.futures import Executor
 from functools import singledispatch
-import json
 import logging
 import os
 import os.path
@@ -27,6 +26,7 @@ from typing import Any, AsyncIterable, Dict, Iterable, List
 from urllib.parse import urlencode, quote
 
 import aiohttp
+import ujson as json
 
 
 class OoniClient(abc.ABC):
