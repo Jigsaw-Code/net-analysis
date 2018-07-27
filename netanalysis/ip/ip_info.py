@@ -52,9 +52,14 @@ class IpInfoService:
     def get_country(self, ip: model.IpAddress) -> (str, str):
         "Returns country code and country name for the IP"
         # TODO: Consider exposing the confidence value
-        country_record = self._geoip2_country.country(
-            ip.compressed).country  # type: geoip2.records.Country
-        return (str(country_record.iso_code), str(country_record.name))
+        try:
+            country_record = self._geoip2_country.country(
+                ip.compressed).country  # type: geoip2.records.Country
+            if not country_record:
+                return ("ZZ", "Unknown")
+            return (str(country_record.iso_code), str(country_record.name))
+        except:
+            return ("ZZ", "Unknown")
 
     def resolve_ip(self, ip: model.IpAddress) -> str:
         try:
@@ -66,9 +71,9 @@ class IpInfoService:
 def create_default_ip_info_service() -> IpInfoService:
     as_repo = sas.create_default_as_repo()
     ip_asn = geoip2.database.Reader(resource_filename(
-        "third_party/maxmind/GeoLite2-ASN_20180327/GeoLite2-ASN.mmdb"))
+        "third_party/maxmind/GeoLite2-ASN_20180724/GeoLite2-ASN.mmdb"))
     ip_country = geoip2.database.Reader(resource_filename(
-        "third_party/maxmind/GeoLite2-Country_20180327/GeoLite2-Country.mmdb"))
+        "third_party/maxmind/GeoLite2-Country_20180703/GeoLite2-Country.mmdb"))
     return IpInfoService(as_repo, ip_asn, ip_country)
 
 
