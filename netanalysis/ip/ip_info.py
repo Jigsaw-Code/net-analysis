@@ -71,9 +71,9 @@ class IpInfoService:
 def create_default_ip_info_service() -> IpInfoService:
     as_repo = sas.create_default_as_repo()
     ip_asn = geoip2.database.Reader(resource_filename(
-        "third_party/maxmind/GeoLite2-ASN_20180724/GeoLite2-ASN.mmdb"))
+        "third_party/maxmind/GeoLite2-ASN_20180814/GeoLite2-ASN.mmdb"))
     ip_country = geoip2.database.Reader(resource_filename(
-        "third_party/maxmind/GeoLite2-Country_20180703/GeoLite2-Country.mmdb"))
+        "third_party/maxmind/GeoLite2-Country_20180807/GeoLite2-Country.mmdb"))
     return IpInfoService(as_repo, ip_asn, ip_country)
 
 
