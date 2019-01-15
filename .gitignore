@@ -11,6 +11,7 @@ Pipfile
 /bazel-*
 
 /ooni_data
+/traffic_data
 .DS_Store
 
 # IDEs

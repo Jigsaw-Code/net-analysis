@@ -20,6 +20,10 @@ _Disclaimer: This is not an officially supported Jigsaw product._
 
 [netanalysis/analysis/DomainAnalysis.ipynb](netanalysis/analysis/DomainAnalysis.ipynb) gives you an idea of what the analysis look like.
 
+### Fetch Google Traffic Data for analysis:
+
+See [netanalysis/traffic/README.md](netanalysis/traffic/README.md).
+
 ### Get information about an IP address:
 
 ```
