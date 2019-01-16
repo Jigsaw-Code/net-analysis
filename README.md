@@ -22,7 +22,14 @@ _Disclaimer: This is not an officially supported Jigsaw product._
 
 ### Fetch Google Traffic Data for analysis:
 
-See [netanalysis/traffic/README.md](netanalysis/traffic/README.md).
+This uses the Google Transparency Report internal API. You must agree to [Google APIs Terms of Service](https://developers.google.com/terms/).
+
+```
+.venv/bin/python -m netanalysis.traffic.fetch_google_traffic --output_dir=traffic_data/
+```
+
+See [netanalysis/traffic/README.md](netanalysis/traffic/README.md) for details.
+
 
 ### Get information about an IP address:
 
