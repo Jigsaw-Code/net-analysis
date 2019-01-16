@@ -20,7 +20,9 @@ import logging
 import sys
 import time
 from typing import List, Iterable
+import urllib.parse
 
+import iso3166
 import pandas as pd
 import statsmodels.api as sm
 
@@ -121,15 +123,70 @@ def _make_report_url(start_date: datetime.datetime, end_date: datetime.datetime,
     chart_padding = (end_date - start_date) * 2
     chart_start_date = start_date - chart_padding
     chart_end_date = min(end_date + chart_padding, datetime.datetime.now())
-    return "https://transparencyreport.google.com/traffic/overview?lu=fraction_traffic&fraction_traffic=product:%s;start:%s;end:%s;region:%s" % (
-        product_id.value, _to_google_timestamp(
-            chart_start_date), _to_google_timestamp(chart_end_date), region_code
+    return ("https://transparencyreport.google.com/traffic/overview?%s" % 
+       urllib.parse.urlencode({
+           "lu": "fraction_traffic",
+           "fraction_traffic": "product:%s;start:%s;end:%s;region:%s" % (
+                product_id.value, _to_google_timestamp(chart_start_date),
+                _to_google_timestamp(chart_end_date), region_code
+            )
+       })
+    )
+
+
+def _make_tor_users_url(start_date: datetime.datetime, end_date: datetime.datetime, region_code: str):
+    end_date = end_date + datetime.timedelta(days=1)
+    chart_padding = (end_date - start_date) * 2
+    chart_start_date = start_date - chart_padding
+    chart_end_date = min(end_date + chart_padding, datetime.datetime.now())
+    return ("https://metrics.torproject.org/userstats-relay-country.html?%s" %
+        urllib.parse.urlencode({
+            "events": "on",
+            "start": chart_start_date.date().isoformat(),
+            "end": chart_end_date.date().isoformat(),
+            "country": region_code 
+        })
+    )
+
+
+def _make_context_web_search_url(start_date: datetime.datetime, end_date: datetime.datetime, region_code: str):
+    return ("https://www.google.com/search?%s" %
+        urllib.parse.urlencode({
+            "q": "internet %s" % iso3166.countries.get(region_code).name,
+            "tbs": "cdr:1,cd_min:%s,cd_max:%s" % (
+                start_date.date().strftime("%m/%d/%Y"),
+                end_date.date().strftime("%m/%d/%Y")
+            )
+        })
+    )
+
+
+def _make_context_twitter_url(start_date: datetime.datetime, end_date: datetime.datetime, region_code: str):
+    return ("https://twitter.com/search?%s" %
+        urllib.parse.urlencode({
+            "q": "internet %s since:%s until:%s" % (
+                iso3166.countries.get(region_code).name,
+                start_date.date().isoformat(),
+                end_date.date().isoformat()
+            )
+        })
     )
 
 
 def print_disruption_csv(disruption: model.RegionDisruption) -> None:
-    print("%s %s %s" % (
-        disruption.region_code, disruption.start.date().isoformat(), disruption.end.date().isoformat()))
+    country_name = iso3166.countries.get(disruption.region_code).name
+    search_url = _make_context_web_search_url(disruption.start,
+        disruption.start + datetime.timedelta(days=7),
+        disruption.region_code)
+    twitter_url = _make_context_twitter_url(disruption.start,
+        disruption.start + datetime.timedelta(days=7),
+        disruption.region_code)
+    tor_url = _make_tor_users_url(disruption.start, disruption.end, disruption.region_code)
+    print("%s (%s) %s %s Context: %s %s %s" % (
+        country_name, disruption.region_code, disruption.start.date().isoformat(),
+        disruption.end.date().isoformat(),
+        search_url, twitter_url, tor_url
+    ))
     for product_disruption in disruption.product_disruptions:
         report_url = _make_report_url(
             product_disruption.start, product_disruption.end, disruption.region_code, product_disruption.product_id)
@@ -139,7 +196,7 @@ def print_disruption_csv(disruption: model.RegionDisruption) -> None:
             product_disruption.end.date(),
             product_disruption.relative_impact,
             product_disruption.absolute_impact,
-            report_url
+            report_url,
         ))
     # return
     # report_url = _make_report_url(
