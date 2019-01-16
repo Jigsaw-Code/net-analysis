@@ -7,7 +7,7 @@ boto3
 cchardet
 certifi
 iso3166
-jupyter==1.*
+jupyter
 networkx
 geoip2
 google-cloud-bigquery
