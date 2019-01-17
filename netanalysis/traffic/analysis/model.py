@@ -19,8 +19,17 @@ from typing import List
 
 from netanalysis.traffic.data import model as traffic
 
-# A single timeline point outside the expected range.
 class AnomalyPoint(object):
+    """A single timeline point outside the expected range.
+    
+    Attributes:
+      timestamp: The time of the anomaly
+      traffic: The observed traffic number
+      expected: What traffic number was expected
+      absolute_impact: expected - traffic
+      relative_impact: absolute_impact / mean traffic
+    """
+
     def __init__(self, timestamp: datetime.datetime, traffic: float,
                  expected: float, relative_impact: float) -> None:
         self.timestamp = timestamp
@@ -33,9 +42,20 @@ class AnomalyPoint(object):
         return "AnomalyPoint(%s)" % repr(self.__dict__)
 
 
-# A disruption to a product represented by a sequence of anomalous points.
-# This refers to a single region, which is implicit.
 class ProductDisruption(object):
+    """ A disruption to a product represented by a sequence of anomalous points.
+
+    This refers to a single region, which is implicit.
+
+    Attributes:
+      product_id: The ProductId of the product this disruption is about
+      start: Time of the first anomaly point
+      end: Time of the last anomaly point
+      anomalies: List of all observed anomalies
+      absolute_impact: Sum of the absolute impact of all anomalies
+      relative_impact: Sum of the relative impact of all anomalies
+    """
+
     def __init__(self, product_id: traffic.ProductId) -> None:
         self.product_id = product_id
         self.start = datetime.datetime.max
@@ -55,9 +75,18 @@ class ProductDisruption(object):
         return "ProductDisruption(%s)" % repr(self.__dict__)
 
 
-# A disruption to traffic in a region, represented by overlapping disruptions of
-# multiple products in that region.
 class RegionDisruption(object):
+    """A disruption to traffic in a region.
+    
+    The region disruption is represented by overlapping disruptions of
+    multiple products in that region.
+
+    Attributes:
+      region_code: The country code of the region this disruption is about.
+      start: Time of the first anomaly point
+      end: Time of the last anomaly point
+      product_disruptions: The list of all observed ProductDisruptions
+    """
     def __init__(self, region_code: str) -> None:
         self.region_code = region_code
         self.start = datetime.datetime.max
