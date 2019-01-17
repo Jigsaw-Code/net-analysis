@@ -136,7 +136,7 @@ def _make_report_url(start_date: datetime.datetime, end_date: datetime.datetime,
 
 def _make_tor_users_url(start_date: datetime.datetime, end_date: datetime.datetime, region_code: str):
     end_date = end_date + datetime.timedelta(days=1)
-    chart_padding = (end_date - start_date) * 2
+    chart_padding = max(datetime.timedelta(days=7), (end_date - start_date) * 2)
     chart_start_date = start_date - chart_padding
     chart_end_date = min(end_date + chart_padding, datetime.datetime.now())
     return ("https://metrics.torproject.org/userstats-relay-country.html?%s" %
@@ -144,10 +144,9 @@ def _make_tor_users_url(start_date: datetime.datetime, end_date: datetime.dateti
             "events": "on",
             "start": chart_start_date.date().isoformat(),
             "end": chart_end_date.date().isoformat(),
-            "country": region_code 
+            "country": region_code.lower()
         })
     )
-
 
 def _make_context_web_search_url(start_date: datetime.datetime, end_date: datetime.datetime, region_code: str):
     return ("https://www.google.com/search?%s" %
