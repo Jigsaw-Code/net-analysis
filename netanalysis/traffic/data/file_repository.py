@@ -22,8 +22,9 @@ import pandas as pd
 from netanalysis.traffic.data import model
 
 
-# TrafficRepository that reads the traffic data from previously downloaded files
 class FileTrafficRepository(model.TrafficRepository):
+    """TrafficRepository that reads the traffic data from previously downloaded files"""
+
     def __init__(self, base_directory: str) -> None:
         self.base_directory = base_directory
 

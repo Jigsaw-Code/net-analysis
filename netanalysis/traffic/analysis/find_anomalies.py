@@ -207,16 +207,17 @@ def print_disruption_csv(disruption: model.RegionDisruption) -> None:
     #     disruption.absolute_impact, report_url))
 
 
-# Returns a list of all region disruptions for the given regions and analyzing the given products only.
-# TODO: Investigate why YouTube is not output for these outages:
-# TG 2017-09-20 2017-09-21
-#     BLOGGER, 2017-09-20, 2017-09-21, 2.085934, 0.115080, https://transparencyreport.google.com/traffic/overview?lu=fraction_traffic&fraction_traffic=product:2;start:1505534400000;end:1506398400000;region:TG
-#     WEB_SEARCH, 2017-09-20, 2017-09-21, 1.388299, 0.223981, https://transparencyreport.google.com/traffic/overview?lu=fraction_traffic&fraction_traffic=product:19;start:1505534400000;end:1506398400000;region:TG
-# ET 2017-05-31 2017-06-07
-#     TRANSLATE, 2017-05-31, 2017-06-02, 2.786339, 0.203082, https://transparencyreport.google.com/traffic/overview?lu=fraction_traffic&fraction_traffic=product:16;start:1495684800000;end:1496980800000;region:ET
-#     WEB_SEARCH, 2017-05-31, 2017-06-07, 5.233837, 1.615268, https://transparencyreport.google.com/traffic/overview?lu=fraction_traffic&fraction_traffic=product:19;start:1494820800000;end:1498276800000;region:ET
 def find_all_disruptions(repo: traffic.TrafficRepository,
                          regions: Iterable[str], products: Iterable[traffic.ProductId]) -> List[model.RegionDisruption]:
+    """Returns a list of all region disruptions for the given regions and analyzing the given products only."""
+    # TODO: Investigate why YouTube is not output for these outages:
+    # TG 2017-09-20 2017-09-21
+    #     BLOGGER, 2017-09-20, 2017-09-21, 2.085934, 0.115080, https://transparencyreport.google.com/traffic/overview?lu=fraction_traffic&fraction_traffic=product:2;start:1505534400000;end:1506398400000;region:TG
+    #     WEB_SEARCH, 2017-09-20, 2017-09-21, 1.388299, 0.223981, https://transparencyreport.google.com/traffic/overview?lu=fraction_traffic&fraction_traffic=product:19;start:1505534400000;end:1506398400000;region:TG
+    # ET 2017-05-31 2017-06-07
+    #     TRANSLATE, 2017-05-31, 2017-06-02, 2.786339, 0.203082, https://transparencyreport.google.com/traffic/overview?lu=fraction_traffic&fraction_traffic=product:16;start:1495684800000;end:1496980800000;region:ET
+    #     WEB_SEARCH, 2017-05-31, 2017-06-07, 5.233837, 1.615268, https://transparencyreport.google.com/traffic/overview?lu=fraction_traffic&fraction_traffic=product:19;start:1494820800000;end:1498276800000;region:ET
+
     all_disruptions = []  # type: List[model.RegionDisruption]
     for region_code in regions:
         product_disruptions = []  # type: List[model.ProductDisruption]

@@ -35,8 +35,9 @@ def _to_timestamp(time_point: datetime.datetime):
 
 _SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
 
-# TrafficRepository that reads the traffic data from Google's Transparency Report.
 class ApiTrafficRepository(model.TrafficRepository):
+    """TrafficRepository that reads the traffic data from Google's Transparency Report."""
+
     def _query_api(self, endpoint, params=None):
         query_url = "https://www.google.com/transparencyreport/api/v3/traffic/" + \
             quote(endpoint)
