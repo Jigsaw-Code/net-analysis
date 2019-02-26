@@ -8,6 +8,6 @@ third_party {
     type: ARCHIVE
     value: "http://geolite.maxmind.com/download/geoip/database/GeoLite2-ASN.tar.gz"
   }
-  version: "20181120"
-  last_upgrade_date { year: 2018 month: 11 day: 19 }
+  version: "20190226"
+  last_upgrade_date { year: 2019 month: 2 day: 26 }
 }

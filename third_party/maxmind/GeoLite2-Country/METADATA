@@ -8,6 +8,6 @@ third_party {
     type: ARCHIVE
     value: "http://geolite.maxmind.com/download/geoip/database/GeoLite2-Country.tar.gz"
   }
-  version: "20181113"
-  last_upgrade_date { year: 2018 month: 11 day: 19 }
+  version: "20190219"
+  last_upgrade_date { year: 2019 month: 2 day: 26 }
 }
