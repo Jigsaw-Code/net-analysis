@@ -21,9 +21,9 @@ import socket
 
 import ipywidgets as widgets
 
-from netanalysis.dns import domain_ip_validator
 from netanalysis.ip import ip_info as ii
 from netanalysis.ip import model
+from netanalysis.tls import domain_ip_validator
 
 
 VALIDATOR = domain_ip_validator.DomainIpValidator()

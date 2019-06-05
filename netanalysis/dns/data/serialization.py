@@ -18,7 +18,7 @@ from typing import Dict, List
 
 import ujson as json
 
-from netanalysis.dns import model
+from netanalysis.dns.data import model
 
 
 @singledispatch

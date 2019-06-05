@@ -22,9 +22,9 @@ from IPython.display import display
 import ipywidgets as widgets
 from matplotlib import pyplot
 
-from netanalysis.dns import classifier as dc
-from netanalysis.dns import graph as dg
-from netanalysis.dns import domain_ip_validator
+from netanalysis.dns.analysis import classifier as dc
+from netanalysis.dns.analysis import graph as dg
+from netanalysis.tls import domain_ip_validator
 
 
 class AnalysisApp:

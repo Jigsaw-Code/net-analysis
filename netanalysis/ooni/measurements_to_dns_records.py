@@ -38,8 +38,8 @@ from urllib.parse import urlparse
 
 import ujson as json
 
-from netanalysis.dns import model as dns
-from netanalysis.dns import serialization as ds
+from netanalysis.dns.data import model as dns
+from netanalysis.dns.data import serialization as ds
 
 
 def parse_ooni_date(date_str: str) -> datetime.datetime:
