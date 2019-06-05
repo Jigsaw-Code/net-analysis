@@ -50,8 +50,8 @@ import matplotlib.pyplot as pyplot
 import networkx
 import ujson as json
 
-import netanalysis.analysis.simple_autonomous_system as sas
-import netanalysis.model.autonomous_system as autonomous_system
+import netanalysis.ip.simple_autonomous_system as sas
+import netanalysis.ip.model as autonomous_system
 
 class DnsResolution:
     def __init__(self, measurement, country=None, resolver_ip=None, client_as=None, time=None, url=None):

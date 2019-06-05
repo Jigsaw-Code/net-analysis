@@ -29,7 +29,7 @@ import sys
 
 import geoip2.database
 
-from netanalysis.dns import domain_ip_validator
+from netanalysis.tls import domain_ip_validator
 from netanalysis.infrastructure.resources import resource_filename
 
 from . import model

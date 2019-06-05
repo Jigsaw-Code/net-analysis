@@ -40,7 +40,7 @@ See [netanalysis/traffic/README.md](netanalysis/traffic/README.md) for details.
 ### Check if an IP is valid for a domain:
 
 ```
-.venv/bin/python -m netanalysis.dns.domain_ip_validator jigsaw.google.com 172.217.10.78
+.venv/bin/python -m netanalysis.tls.domain_ip_validator jigsaw.google.com 172.217.10.78
 ```
 
 ## Contributing

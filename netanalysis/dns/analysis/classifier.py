@@ -18,7 +18,6 @@ from itertools import chain
 from typing import Set
 
 import networkx as nx
-from numpy.random import RandomState
 
 class EdgeClass(Enum):
     UNKNOWN = 0
@@ -136,7 +135,7 @@ def draw_graph(graph: nx.DiGraph):
         data=True) if _get_edge_class(data) == EdgeClass.BAD)
     bad_nodes = set(v for (u, v) in bad_edges)
 
-    nodes_pos = nx.spring_layout(graph, random_state=RandomState(0))
+    nodes_pos = nx.spring_layout(graph)
     nx.draw_networkx_nodes(graph, pos=nodes_pos, alpha=0.6, node_color="gray")
     nx.draw_networkx_nodes(graph, pos=nodes_pos, alpha=0.8, nodelist=good_nodes, node_color="g")
     nx.draw_networkx_nodes(graph, pos=nodes_pos, alpha=0.8, nodelist=bad_nodes, node_color="r")

@@ -21,7 +21,7 @@ from matplotlib import pyplot
 import networkx as nx
 import ujson as json
 
-import netanalysis.dns.serialization as ds
+import netanalysis.dns.data.serialization as ds
 
 
 def _get_edge_target(data):
