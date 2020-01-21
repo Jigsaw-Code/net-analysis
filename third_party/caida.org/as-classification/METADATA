@@ -1,0 +1,13 @@
+name: "GeoLite2-Country"
+third_party {
+  url {
+    type: HOMEPAGE
+    value: "http://www.caida.org/data/as-classification/"
+  }
+  url {
+    type: ARCHIVE
+    value: "http://data.caida.org/datasets/as-classification/20200101.as2types.txt.gz"
+  }
+  version: "20200101"
+  last_upgrade_date { year: 2020 month: 1 day: 21 }
+}

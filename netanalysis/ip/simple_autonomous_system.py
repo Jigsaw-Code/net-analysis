@@ -153,6 +153,6 @@ def create_default_as_repo() -> InMemoryAsRepository:
     fill_as_info_from_filename(as_info_filename, as_repo)
 
     as_type_filename = resource_filename(
-        "third_party/caida.org/as-classification/20150801.as2types.txt.gz")
+        "third_party/caida.org/as-classification/as2types.txt.gz")
     fill_as_type_from_filename(as_type_filename, as_repo)
     return as_repo
