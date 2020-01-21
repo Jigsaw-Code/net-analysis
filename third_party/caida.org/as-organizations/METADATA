@@ -1,0 +1,13 @@
+name: "GeoLite2-Country"
+third_party {
+  url {
+    type: HOMEPAGE
+    value: "http://www.caida.org/data/as-organizations/"
+  }
+  url {
+    type: ARCHIVE
+    value: "http://data.caida.org/datasets/as-organizations/20191001.as-org2info.txt.gz"
+  }
+  version: "20191001"
+  last_upgrade_date { year: 2020 month: 1 day: 21 }
+}
