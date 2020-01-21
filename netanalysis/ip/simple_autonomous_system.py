@@ -111,7 +111,7 @@ def fill_as_info_from_file(as_org_file, as_repo: InMemoryAsRepository):
                 mode = "as"
             continue
         if mode == "as":
-            as_number_str, date_changed_str, as_name, org_id, source = \
+            as_number_str, date_changed_str, as_name, org_id, opaque_id, source = \
                 line.split("|")
             as_number = int(as_number_str)
             as_repo.add_as(as_number, as_name, org_id,
