@@ -131,7 +131,7 @@ def fill_as_type_from_filename(filename: str, as_repo: InMemoryAsRepository):
 def fill_as_type_from_file(as_type_file, as_repo: InMemoryAsRepository):
     str_to_type = {
         "Content": model.AsType.CONTENT,
-        "Enterpise": model.AsType.ENTERPRISE,
+        "Enterprise": model.AsType.ENTERPRISE,
         "Transit/Access": model.AsType.TRANSIT_ACCESS,
     }
     for line in as_type_file:
