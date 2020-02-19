@@ -6,6 +6,7 @@ __pycache__
 
 # Pipfile is generated from py_dev_requirements.txt
 Pipfile
+Pipfile.lock
 
 # Bazel output
 /bazel-*
@@ -17,3 +18,8 @@ Pipfile
 # IDEs
 .idea/
 .vscode/
+
+# Distribution
+dist
+build
+netanalysis.egg-info
