@@ -18,8 +18,3 @@ Pipfile.lock
 # IDEs
 .idea/
 .vscode/
-
-# Distribution
-dist
-build
-netanalysis.egg-info

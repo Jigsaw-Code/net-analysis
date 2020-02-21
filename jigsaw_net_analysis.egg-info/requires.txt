@@ -1,0 +1,15 @@
+appdirs==1.4.3
+astroid==2.3.3
+certifi==2019.11.28
+colorama==0.4.3
+distlib==0.3.0
+filelock==3.0.12
+isort==4.3.21
+lazy-object-proxy==1.4.3
+mccabe==0.6.1
+pipenv==2018.11.26
+pylint==2.4.4
+six==1.14.0
+virtualenv==20.0.5
+virtualenv-clone==0.5.3
+wrapt==1.11.2
