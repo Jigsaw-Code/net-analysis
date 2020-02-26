@@ -4,7 +4,7 @@ import setuptools
 with open("README.md", "r") as readme:
     long_description = readme.read()
 
-deps = os.popen("pip freeze").readlines()
+deps = os.popen("pip freeze -l --all").readlines()
 # readlines() doesn't strip trailing newlines
 deps = [d.strip() for d in deps]
 
