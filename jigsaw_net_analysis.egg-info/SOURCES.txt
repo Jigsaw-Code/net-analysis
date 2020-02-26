@@ -5,3 +5,5 @@ jigsaw_net_analysis.egg-info/SOURCES.txt
 jigsaw_net_analysis.egg-info/dependency_links.txt
 jigsaw_net_analysis.egg-info/requires.txt
 jigsaw_net_analysis.egg-info/top_level.txt
+netanalysis/__init__.py
+third_party/__init__.py

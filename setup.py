@@ -12,7 +12,6 @@ setuptools.setup(
     name="jigsaw-net-analysis",
     version="0.0.1",
     author="Jigsaw Operations, LLC",
-    author_email="fortuna@google.com",
     description="Network analysis tools",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -27,5 +26,5 @@ setuptools.setup(
         "Topic :: System :: Networking :: Monitoring"
     ],
     python_requires='>=3.7',
-    install_requires=deps
+    install_requires=deps,
 )
