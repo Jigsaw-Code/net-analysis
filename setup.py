@@ -4,9 +4,10 @@ import setuptools
 with open("README.md", "r") as readme:
     long_description = readme.read()
 
-deps = os.popen("pip freeze -l --all").readlines()
+deps = os.popen("./setup_python.sh > /dev/null && pip freeze -r py_dev_requirements.txt -r third_party/py_requirements.txt | sed '/^##.*/d' | sed '/^-e.*/d'").readlines()
 # readlines() doesn't strip trailing newlines
 deps = [d.strip() for d in deps]
+print(",".join(deps))
 
 setuptools.setup(
     name="jigsaw-net-analysis",

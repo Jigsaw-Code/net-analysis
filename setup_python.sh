@@ -17,4 +17,4 @@
 # Sets up the Python environment for development under .venv
 
 rm -f Pipfile
-PIPENV_VENV_IN_PROJECT=1 pipenv --python="3.7" install -r py_dev_requirements.txt
+PIPENV_VENV_IN_PROJECT=1 pipenv --python="3.7" install -r py_dev_requirements.txt -r third_party/py_requirements.txt

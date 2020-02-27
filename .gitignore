@@ -18,3 +18,8 @@ Pipfile.lock
 # IDEs
 .idea/
 .vscode/
+
+# Build output
+build/
+dist/
+jigsaw_net_analysis.egg-info/
