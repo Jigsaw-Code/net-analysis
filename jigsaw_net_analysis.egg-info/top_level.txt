@@ -1,2 +1,0 @@
-netanalysis
-third_party

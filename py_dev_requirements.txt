@@ -1,4 +1,0 @@
-pylint
-autopep8
-mypy
-rope

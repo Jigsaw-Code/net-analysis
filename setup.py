@@ -4,10 +4,9 @@ import setuptools
 with open("README.md", "r") as readme:
     long_description = readme.read()
 
-deps = os.popen("cat third_party/py_requirements.txt").readlines()
-# readlines() doesn't strip trailing newlines
-deps = [d.strip() for d in deps]
-print(",".join(deps))
+packages = setuptools.find_packages()
+print(", ".join(packages))
+# exit()
 
 setuptools.setup(
     name="jigsaw-net-analysis",
@@ -27,5 +26,22 @@ setuptools.setup(
         "Topic :: System :: Networking :: Monitoring"
     ],
     python_requires='>=3.7',
-    install_requires=deps,
+    install_requires=[ 
+        "aiodns",
+        "aiohttp",
+        "boto3",
+        "cchardet",
+        "certifi",
+        "iso3166",
+        "jupyter",
+        "networkx",
+        "geoip2",
+        "google-cloud-bigquery",
+        "matplotlib",
+        "pandas",
+        "plotly",
+        "pydot",
+        "scipy",
+        "statsmodels",
+        "ujson"],
 )
