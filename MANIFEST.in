@@ -1,3 +1,0 @@
-include third_party/**/*.pdf
-include third_party/**/*.txt.gz
-include third_party/**/*.mmdb
