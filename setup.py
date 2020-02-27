@@ -26,7 +26,7 @@ setuptools.setup(
         "Topic :: System :: Networking :: Monitoring"
     ],
     python_requires='>=3.7',
-    install_requires=[ 
+    install_requires=[
         "aiodns",
         "aiohttp",
         "boto3",
@@ -43,5 +43,7 @@ setuptools.setup(
         "pydot",
         "scipy",
         "statsmodels",
-        "ujson"],
+        "ujson"
+    ],
+    include_package_data=True
 )
