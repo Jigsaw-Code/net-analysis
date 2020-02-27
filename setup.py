@@ -5,8 +5,6 @@ with open("README.md", "r") as readme:
     long_description = readme.read()
 
 packages = setuptools.find_packages()
-print(", ".join(packages))
-# exit()
 
 setuptools.setup(
     name="jigsaw-net-analysis",

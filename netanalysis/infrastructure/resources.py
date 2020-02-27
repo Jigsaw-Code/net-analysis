@@ -23,6 +23,9 @@ assert (_PACKAGE_DIR.split(os.path.sep)[-2:] == ["netanalysis", "infrastructure"
 
 _RESOURCES_ROOT = os.path.normpath(os.path.join(_PACKAGE_DIR, ".."))
 
+print(_RESOURCES_ROOT)
+exit()
+
 def resource_filename(resource_path: str) -> str:
     filesystem_path = os.path.join(*resource_path.split("/"))
     return os.path.join(_RESOURCES_ROOT, filesystem_path)
