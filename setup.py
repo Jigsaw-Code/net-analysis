@@ -44,11 +44,4 @@ setuptools.setup(
         "ujson"
     ],
     include_package_data=True,
-    package_data = {
-        "third_party": [
-            "third_party/**/*.pdf",
-            "third_party/**/*.txt.gz",
-            "third_party/**/*.mmdb",
-        ]
-    }
 )

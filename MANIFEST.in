@@ -1,3 +1,1 @@
-include netanalysis/third_party/**/*.mmdb
-include netanalysis/third_party/**/*.pdf
-include netanalysis/third_party/**/*.txt.gz
+graft netanalysis/third_party
