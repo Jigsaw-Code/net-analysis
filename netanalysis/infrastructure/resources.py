@@ -21,7 +21,7 @@ _PACKAGE_DIR = os.path.dirname(__file__)
 assert (_PACKAGE_DIR.split(os.path.sep)[-2:] == ["netanalysis", "infrastructure"]), \
     "resources.py in invalid directory %s" % _PACKAGE_DIR
 
-_RESOURCES_ROOT = os.path.normpath(os.path.join(_PACKAGE_DIR, "..", ".."))
+_RESOURCES_ROOT = os.path.normpath(os.path.join(_PACKAGE_DIR, ".."))
 
 def resource_filename(resource_path: str) -> str:
     filesystem_path = os.path.join(*resource_path.split("/"))

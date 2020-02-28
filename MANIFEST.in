@@ -1,6 +1,4 @@
-#!/bin/bash -eu
-#
-# Copyright 2018 Jigsaw Operations LLC
+# Copyright 2020 Jigsaw Operations LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Sets up the Python environment for development under .venv
-
-rm -f Pipfile
-PIPENV_VENV_IN_PROJECT=1 pipenv --python="3.7" install -r py_dev_requirements.txt
+graft netanalysis/third_party
