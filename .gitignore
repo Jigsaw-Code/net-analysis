@@ -4,8 +4,7 @@ __pycache__
 .venv
 .mypy_cache
 
-# Pipfile is generated from py_dev_requirements.txt
-Pipfile
+# Pipfile.lock is generated from pipenv install
 Pipfile.lock
 
 # Bazel output
@@ -23,3 +22,4 @@ Pipfile.lock
 build/
 dist/
 jigsaw_net_analysis.egg-info/
+__init__.pyc
