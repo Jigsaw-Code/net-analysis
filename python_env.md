@@ -29,3 +29,5 @@ On macOS you may get an error if you don't have the needed developer tools. You 
 Libraries used in code should be listed in [setup.py](setup.py).
 
 Tools for development should be listed in the [Pipfile](Pipfile).
+
+After adding new dependencies to the files, run `pipenv install` to refresh the environment.

@@ -12,4 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Include everything under third_party as a data dependency
 graft netanalysis/third_party
