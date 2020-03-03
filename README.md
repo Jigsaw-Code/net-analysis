@@ -11,6 +11,12 @@ _Disclaimer: This is not an officially supported Jigsaw product._
 
 [Set up your Python development environment](python_env.md)
 
+## Installation
+
+netanalysis is not currently in PyPI.  Instead you can install straight from our Github repository:
+
+`pip install git+git://github.com/Jigsaw-Code/net-analysis.git@master`
+
 
 ## Tutorials
 
