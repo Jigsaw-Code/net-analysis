@@ -7,10 +7,6 @@ _Disclaimer: This is not an officially supported Jigsaw product._
 
 > **Experimental code.** We may break you. Please let us know if you are using this code.
 
-## Requirements
-
-[Set up your Python development environment](python_env.md)
-
 ## Installation
 
 netanalysis is not currently in PyPI.  Instead you can install straight from our Github repository:
@@ -31,7 +27,7 @@ netanalysis is not currently in PyPI.  Instead you can install straight from our
 This uses the Google Transparency Report internal API. You must agree to [Google APIs Terms of Service](https://developers.google.com/terms/).
 
 ```
-.venv/bin/python -m netanalysis.traffic.data.fetch_google_traffic --output_dir=traffic_data/
+python -m netanalysis.traffic.data.fetch_google_traffic --output_dir=traffic_data/
 ```
 
 See [netanalysis/traffic/README.md](netanalysis/traffic/README.md) for details.
@@ -40,15 +36,17 @@ See [netanalysis/traffic/README.md](netanalysis/traffic/README.md) for details.
 ### Get information about an IP address:
 
 ```
-.venv/bin/python -m netanalysis.ip.ip_info 8.8.8.8
+python -m netanalysis.ip.ip_info 8.8.8.8
 ```
 
 ### Check if an IP is valid for a domain:
 
 ```
-.venv/bin/python -m netanalysis.tls.domain_ip_validator jigsaw.google.com 172.217.10.78
+python -m netanalysis.tls.domain_ip_validator jigsaw.google.com 172.217.10.78
 ```
 
-## Contributing
+## Development
+
+[Set up your Python development environment](python_env.md)
 
 We welcome your contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details and wishlist.

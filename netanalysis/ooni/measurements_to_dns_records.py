@@ -18,7 +18,7 @@
 Reads OONI measurements and outputs the DNS resource records.
 
 Sample usage:
-  .venv/bin/python -m netanalysis.ooni.measurements_to_dns_records \
+  python -m netanalysis.ooni.measurements_to_dns_records \
       --ooni_measurements_dir=ooni_data/
 """
 
