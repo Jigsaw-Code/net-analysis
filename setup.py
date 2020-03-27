@@ -21,7 +21,7 @@ with open("README.md", "r") as readme:
 
 setuptools.setup(
     name="jigsaw-net-analysis",
-    version="0.0.1",
+    version="0.1.0",
     author="Jigsaw Operations, LLC",
     description="Network analysis tools",
     long_description=long_description,
