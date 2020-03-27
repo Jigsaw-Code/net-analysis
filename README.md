@@ -13,6 +13,12 @@ netanalysis is not currently in PyPI.  Instead you can install straight from our
 
 `pip install git+git://github.com/Jigsaw-Code/net-analysis.git@master`
 
+On a `Pipfile`, you can do:
+
+```
+[packages]
+netanalysis = {git = "git://github.com/Jigsaw-Code/net-analysis.git", ref = "master"}
+```
 
 ## Tutorials
 
