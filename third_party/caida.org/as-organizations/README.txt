@@ -52,3 +52,8 @@ please use:
 
 Also, please, report your publication to CAIDA
 (http://www.caida.org/data/publications/report-publication.xml).
+
+-------------------
+Updating CAIDA Data
+-------------------
+See https://github.com/Jigsaw-Code/net-analysis/pull/11 as an example for how to pull fresh data.
