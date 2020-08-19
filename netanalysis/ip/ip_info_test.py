@@ -29,6 +29,18 @@ class TestIpInfo(unittest.TestCase):
     self.assertEqual(("US", "United States"), ip_service.get_country(ip("2001:4860:4860::8888")))
     self.assertEqual(("US", "United States"), ip_service.get_country(ip("2001:4860:4860::8844")))
     self.assertEqual(("ZZ", "Unknown"), ip_service.get_country(ip("::1")))
+  
+  def test_resolve_ip4(self):
+    ip_service = ii.create_default_ip_info_service()
+    self.assertEqual("dns.google", ip_service.resolve_ip(ip("8.8.8.8")))
+    self.assertEqual("dns.google", ip_service.resolve_ip(ip("8.8.4.4")))
+    self.assertEqual("localhost", ip_service.resolve_ip(ip("127.0.0.1")))
+
+  def test_resolve_ip4(self):
+    ip_service = ii.create_default_ip_info_service()
+    self.assertEqual("dns.google", ip_service.resolve_ip(ip("2001:4860:4860::8888")))
+    self.assertEqual("dns.google", ip_service.resolve_ip(ip("2001:4860:4860::8844")))
+    self.assertEqual("localhost", ip_service.resolve_ip(ip("::1")))
 
 
 if __name__ == '__main__':
