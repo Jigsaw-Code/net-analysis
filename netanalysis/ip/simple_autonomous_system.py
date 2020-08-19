@@ -24,6 +24,7 @@ from netanalysis.infrastructure.resources import resource_filename
 
 from . import model
 
+
 class SimpleAutonomousSystem(model.AutonomousSystem):
     def __init__(self, as_repo: model.AsRepository, as_number: int, as_name: str, org_id: str,
                  source: str, date_changed_str: str) -> None:
@@ -61,7 +62,6 @@ def UnknownAutonomousSystem(as_repo, as_number):
 
 def UnknownAsOrg(org_id):
     return model.AsOrg(org_id, org_id, None, None, None)
-
 
 
 class InMemoryAsRepository(model.AsRepository):

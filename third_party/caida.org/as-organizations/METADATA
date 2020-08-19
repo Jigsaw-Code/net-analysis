@@ -6,8 +6,8 @@ third_party {
   }
   url {
     type: ARCHIVE
-    value: "http://data.caida.org/datasets/as-organizations/20191001.as-org2info.txt.gz"
+    value: "http://data.caida.org/datasets/as-organizations/20200701.as-org2info.txt.gz"
   }
-  version: "20191001"
-  last_upgrade_date { year: 2020 month: 1 day: 21 }
+  version: "20200701"
+  last_upgrade_date { year: 2020 month: 8 day: 18 }
 }

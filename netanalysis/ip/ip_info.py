@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TODO: 
+# TODO:
 # - Get SOA for PTR record
 # - Show city and country
 # - Refactor into IpInfoService
@@ -41,14 +41,14 @@ class IpInfoService:
         self._as_repo = as_repo
         self._geoip2_asn = geoip2_asn
         self._geoip2_country = geoip2_country
-    
+
     def get_as(self, ip: model.IpAddress) -> model.AutonomousSystem:
         try:
             asn = self._geoip2_asn.asn(ip.compressed).autonomous_system_number
         except:
             asn = -1
         return self._as_repo.get_as(asn)
-    
+
     def get_country(self, ip: model.IpAddress) -> (str, str):
         "Returns country code and country name for the IP"
         # TODO: Consider exposing the confidence value
@@ -65,7 +65,7 @@ class IpInfoService:
         try:
             return socket.gethostbyaddr(ip.compressed)[0]
         except socket.herror:
-            return None        
+            return None
 
 
 def create_default_ip_info_service() -> IpInfoService:
@@ -79,14 +79,15 @@ def create_default_ip_info_service() -> IpInfoService:
 
 def main(args):
     ip_info = create_default_ip_info_service()
-    
+
     ip_address = args.ip_address[0]
     print("Country:  %s (%s)" % ip_info.get_country(ip_address))
     asys = ip_info.get_as(ip_address)  # type: model.AutonomousSytem
     print("ASN:  %d (%s)" % (asys.id, asys.name))
     # AS Type is is experimental and outdated data.
     print("Type: %s" % asys.type.name)
-    print("Org:  %s (country: %s, name: %s)" % (asys.org.id, asys.org.country, asys.org.name))
+    print("Org:  %s (country: %s, name: %s)" %
+          (asys.org.id, asys.org.country, asys.org.name))
     if ip_address.is_global:
         hostname = ip_info.resolve_ip(ip_address)
         if hostname:
@@ -95,9 +96,11 @@ def main(args):
         print("IP in not global")
     validator = domain_ip_validator.DomainIpValidator()
     try:
-        cert = asyncio.get_event_loop().run_until_complete(validator.get_cert(None, ip_address))
+        cert = asyncio.get_event_loop().run_until_complete(
+            validator.get_cert(None, ip_address))
         if cert:
-            print("TLS Certificate:\n%s" % pprint.pformat(cert, width=100, compact=True))
+            print("TLS Certificate:\n%s" %
+                  pprint.pformat(cert, width=100, compact=True))
     except Exception as e:
         print("TLS Certificate: %s" % repr(e))
 
