@@ -46,7 +46,7 @@ class TestIpInfo(unittest.TestCase):
         self.assertEqual(
             "localhost", self._ip_service.resolve_ip(ip("127.0.0.1")))
 
-    def test_resolve_ip4(self):
+    def test_resolve_ip6(self):
         self.assertEqual("dns.google", self._ip_service.resolve_ip(
             ip("2001:4860:4860::8888")))
         self.assertEqual("dns.google", self._ip_service.resolve_ip(
