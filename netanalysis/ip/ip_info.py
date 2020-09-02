@@ -37,14 +37,14 @@ from . import simple_autonomous_system as sas
 
 
 class IpInfoService:
-    def __init__(self, as_repo: model.AsRepository, geoip2_asn, geoip2_country):
+    def __init__(self, as_repo: model.AsRepository, ip_to_asn, ip_to_country):
         self._as_repo = as_repo
-        self._geoip2_asn = geoip2_asn
-        self._geoip2_country = geoip2_country
+        self._ip_to_asn = ip_to_asn
+        self._ip_to_country = ip_to_country
 
     def get_as(self, ip: model.IpAddress) -> model.AutonomousSystem:
         try:
-            asn = self._geoip2_asn.asn(ip.compressed).autonomous_system_number
+            asn = self._ip_to_asn.asn(ip.compressed).autonomous_system_number
         except:
             asn = -1
         return self._as_repo.get_as(asn)
@@ -53,7 +53,7 @@ class IpInfoService:
         "Returns country code and country name for the IP"
         # TODO: Consider exposing the confidence value
         try:
-            country_record = self._geoip2_country.country(
+            country_record = self._ip_to_country.country(
                 ip.compressed).country  # type: geoip2.records.Country
             if not country_record:
                 return ("ZZ", "Unknown")
