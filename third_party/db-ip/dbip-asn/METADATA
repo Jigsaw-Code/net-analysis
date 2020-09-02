@@ -1,0 +1,13 @@
+name: "GeoLite2-ASN"
+third_party {
+  url {
+    type: HOMEPAGE
+    value: "https://dev.maxmind.com/geoip/geoip2/geolite2/"
+  }
+  url {
+    type: ARCHIVE
+    value: "http://geolite.maxmind.com/download/geoip/database/GeoLite2-ASN.tar.gz"
+  }
+  version: "20190226"
+  last_upgrade_date { year: 2019 month: 2 day: 26 }
+}
