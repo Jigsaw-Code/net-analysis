@@ -1,13 +1,13 @@
-name: "GeoLite2-ASN"
+name: "dbip-asn-lite"
 third_party {
   url {
     type: HOMEPAGE
-    value: "https://dev.maxmind.com/geoip/geoip2/geolite2/"
+    value: "https://db-ip.com/db/download/ip-to-asn-lite"
   }
   url {
     type: ARCHIVE
-    value: "http://geolite.maxmind.com/download/geoip/database/GeoLite2-ASN.tar.gz"
+    value: "https://download.db-ip.com/free/dbip-asn-lite-2020-09.mmdb.gz"
   }
-  version: "20190226"
-  last_upgrade_date { year: 2019 month: 2 day: 26 }
+  version: "2020-09"
+  last_upgrade_date { year: 2020 month: 9 day: 1 }
 }
