@@ -1,0 +1,13 @@
+name: "dbip-asn-lite"
+third_party {
+  url {
+    type: HOMEPAGE
+    value: "https://db-ip.com/db/download/ip-to-asn-lite"
+  }
+  url {
+    type: ARCHIVE
+    value: "https://download.db-ip.com/free/dbip-asn-lite-2020-09.mmdb.gz"
+  }
+  version: "2020-09"
+  last_upgrade_date { year: 2020 month: 9 day: 1 }
+}
