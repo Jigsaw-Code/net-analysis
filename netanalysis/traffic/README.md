@@ -38,7 +38,7 @@ This will output a sorted list of detected anomalies with the latest one first. 
 
 ## Analyze anomalies
 
-You can use the [Traffic Correlations](TrafficCorrelations.ipynb) IPython Notebook to better analyze the anomalies.
+You can use the [Traffic Correlations](./analysis/TrafficCorrelations.ipynb) IPython Notebook to better analyze the anomalies.
 
 Start the Jupyter notebook backend:
 
