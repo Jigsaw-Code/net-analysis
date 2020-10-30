@@ -18,8 +18,7 @@
 
 import argparse
 import asyncio
-from concurrent.futures import Executor, ThreadPoolExecutor
-import ipaddress
+from concurrent.futures import ThreadPoolExecutor
 import logging
 import os
 import ssl
@@ -34,6 +33,7 @@ import ujson as json
 import netanalysis.ooni.ooni_client as oc
 
 _SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
+
 
 async def aenumerate(inner):
     index = 0
@@ -59,9 +59,11 @@ def main(args):
     tcp_connector = aiohttp.TCPConnector(
         limit_per_host=args.ooni_connections, ssl_context=_SSL_CONTEXT)
     query_country = args.country.upper()
-    if query_country == "*": query_country = None
+    if query_country == "*":
+        query_country = None
     query_url = args.url
-    if query_url == "*": query_url = None
+    if query_url == "*":
+        query_url = None
 
     async def fetch_measurements():
         async with aiohttp.ClientSession(connector=tcp_connector) as http_client:
@@ -74,11 +76,11 @@ def main(args):
             for country_code in country_list:
                 if country_code:
                     logging.info("Processing country %s (%s)", country_code,
-                                iso3166.countries.get(country_code).name)
+                                 iso3166.countries.get(country_code).name)
                 measurement_futures = []
                 async for index, entry in aenumerate(atop_n(
-                    ooni_client.list_measurements(country_code, query_url),
-                                                args.num_measurements)):
+                        ooni_client.list_measurements(country_code, query_url),
+                        args.num_measurements)):
                     if index % 10 == 9:
                         logging.info("Measurement %d of %d", index + 1, args.num_measurements)
                     measurement_id = entry["measurement_id"]

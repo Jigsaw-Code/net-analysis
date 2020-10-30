@@ -1,4 +1,4 @@
-name: "GeoLite2-Country"
+name: "as-organizations"
 third_party {
   url {
     type: HOMEPAGE

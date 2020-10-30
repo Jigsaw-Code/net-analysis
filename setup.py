@@ -36,7 +36,7 @@ setuptools.setup(
         "Topic :: Software Development :: Libraries",
         "Topic :: System :: Networking :: Monitoring"
     ],
-    python_requires='>=3.7',
+    python_requires='>=3.6.9',
     install_requires=[
         "aiodns",
         "aiohttp",

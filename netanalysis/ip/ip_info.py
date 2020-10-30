@@ -14,18 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TODO: 
+# TODO:
 # - Get SOA for PTR record
 # - Show city and country
-# - Refactor into IpInfoService
 
-import abc
 import argparse
 import asyncio
 import ipaddress
 import pprint
 import socket
 import sys
+from typing import Tuple
 
 import geoip2.database
 
@@ -41,15 +40,15 @@ class IpInfoService:
         self._as_repo = as_repo
         self._geoip2_asn = geoip2_asn
         self._geoip2_country = geoip2_country
-    
+
     def get_as(self, ip: model.IpAddress) -> model.AutonomousSystem:
         try:
             asn = self._geoip2_asn.asn(ip.compressed).autonomous_system_number
-        except:
+        except Exception:
             asn = -1
         return self._as_repo.get_as(asn)
-    
-    def get_country(self, ip: model.IpAddress) -> (str, str):
+
+    def get_country(self, ip: model.IpAddress) -> Tuple[str, str]:
         "Returns country code and country name for the IP"
         # TODO: Consider exposing the confidence value
         try:
@@ -58,28 +57,28 @@ class IpInfoService:
             if not country_record:
                 return ("ZZ", "Unknown")
             return (str(country_record.iso_code), str(country_record.name))
-        except:
+        except Exception:
             return ("ZZ", "Unknown")
 
     def resolve_ip(self, ip: model.IpAddress) -> str:
         try:
             return socket.gethostbyaddr(ip.compressed)[0]
         except socket.herror:
-            return None        
+            return None
 
 
 def create_default_ip_info_service() -> IpInfoService:
     as_repo = sas.create_default_as_repo()
     ip_asn = geoip2.database.Reader(resource_filename(
-        "third_party/maxmind/GeoLite2-ASN/GeoLite2-ASN.mmdb"))
+        "third_party/db-ip.com/dbip-asn-lite/dbip-asn-lite.mmdb"))
     ip_country = geoip2.database.Reader(resource_filename(
-        "third_party/maxmind/GeoLite2-Country/GeoLite2-Country.mmdb"))
+        "third_party/db-ip.com/dbip-country-lite/dbip-country-lite.mmdb"))
     return IpInfoService(as_repo, ip_asn, ip_country)
 
 
 def main(args):
     ip_info = create_default_ip_info_service()
-    
+
     ip_address = args.ip_address[0]
     print("Country:  %s (%s)" % ip_info.get_country(ip_address))
     asys = ip_info.get_as(ip_address)  # type: model.AutonomousSytem

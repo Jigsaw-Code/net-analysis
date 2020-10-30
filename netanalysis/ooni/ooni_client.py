@@ -130,7 +130,7 @@ class ApiOoniClient(OoniClient):
         measurement = await self._get_json(self._api_query_url("measurement/%s" % measurement_id))
         return measurement
 
-    async def list_measurements(self, country_code: str=None, url: str=None):
+    async def list_measurements(self, country_code: str = None, url: str = None):
         # Params order_by and input make the query *a lot* slower.
         # TODO: Consider fetching without input.
         # Unfortunately pagination breaks without order_by

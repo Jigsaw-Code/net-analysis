@@ -31,6 +31,7 @@ import netanalysis.traffic.data.api_repository as api
 
 logging.getLogger().setLevel(logging.INFO)
 
+
 def main(args):
     if not args.output_dir:
         logging.error("Need to specify output directory")
@@ -38,7 +39,7 @@ def main(args):
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 
-    report = api.ApiTrafficRepository()  # type: modelTrafficRepository
+    report = api.ApiTrafficRepository()  # type: model.TrafficRepository
     if args.products:
         product_id_list = [model.ProductId[ps.strip().upper()] for ps in args.products.split(",")]
     else:
@@ -57,7 +58,7 @@ def main(args):
             csv_filename = os.path.join(output_region_directory, "%s.csv" % product_id.name)
             if os.path.exists(csv_filename):
                 logging.info("Traffic data already available for %s in %s. Skipping...",
-                    product_id.name, region_code)
+                             product_id.name, region_code)
                 continue
             try:
                 traffic_series = report.get_traffic(region_code, product_id, start_time, end_time)
@@ -69,8 +70,8 @@ def main(args):
                     for entry in traffic_series.iteritems():
                         writer.writerow((entry[0].isoformat(), entry[1]))
             except Exception as error:
-                logging.warning("Failed to get traffic for %s %s: %s", \
-                    region_code, product_id.name, str(error))
+                logging.warning("Failed to get traffic for %s %s: %s",
+                                region_code, product_id.name, str(error))
     return 0
 
 
@@ -79,5 +80,5 @@ if __name__ == "__main__":
         description='Fetches traffic data from the Google Transparency Report as CSV')
     parser.add_argument("--output_dir", type=str, required=True, help='The base directory for the output')
     parser.add_argument("--products", type=str,
-        help="Comma-separated list of the products to get traffic for")
+                        help="Comma-separated list of the products to get traffic for")
     sys.exit(main(parser.parse_args()))

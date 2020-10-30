@@ -33,7 +33,7 @@ def _get_edge_target(data):
 
 
 def load_dns_records_graph(dns_measurements_filename: str,
-                           update_progress=lambda done, total: None) -> nx.MultiDiGraph:  
+                           update_progress=lambda done, total: None) -> nx.MultiDiGraph:
     graph = nx.MultiDiGraph()
     file_size = os.stat(dns_measurements_filename).st_size
     update_progress(0, file_size)
@@ -70,4 +70,3 @@ def country_view(multi_graph: nx.MultiDiGraph, client_country: str) -> nx.MultiD
     country_edges = [(u, v, k) for u, v, k, measurement in multi_graph.edges(
         keys=True, data="measurement") if measurement.client_country == client_country]
     return multi_graph.edge_subgraph(country_edges)
-

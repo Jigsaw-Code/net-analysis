@@ -14,15 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import abc
 import gzip
 from typing import Dict
-
-import geoip2.database
 
 from netanalysis.infrastructure.resources import resource_filename
 
 from . import model
+
 
 class SimpleAutonomousSystem(model.AutonomousSystem):
     def __init__(self, as_repo: model.AsRepository, as_number: int, as_name: str, org_id: str,
@@ -61,7 +59,6 @@ def UnknownAutonomousSystem(as_repo, as_number):
 
 def UnknownAsOrg(org_id):
     return model.AsOrg(org_id, org_id, None, None, None)
-
 
 
 class InMemoryAsRepository(model.AsRepository):
