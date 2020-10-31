@@ -14,11 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import abc
 import gzip
 from typing import Dict
-
-import geoip2.database
 
 from netanalysis.infrastructure.resources import resource_filename
 

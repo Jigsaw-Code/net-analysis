@@ -18,7 +18,7 @@ import argparse
 import ipaddress
 import sys
 
-import netanalysis.google.google_dns as gd
+from . import google_dns as gd
 
 
 def main(args):

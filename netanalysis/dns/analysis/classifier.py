@@ -19,6 +19,7 @@ from typing import Set
 
 import networkx as nx
 
+
 class EdgeClass(Enum):
     UNKNOWN = 0
     GOOD = 1

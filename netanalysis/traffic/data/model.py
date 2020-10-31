@@ -20,9 +20,10 @@ Model for traffic data repositories.
 import abc
 import datetime
 from enum import IntEnum
-from typing import Iterable, Tuple
+from typing import Iterable
 
 import pandas as pd
+
 
 class ProductId(IntEnum):
     UNKNOWN = 0
@@ -53,5 +54,5 @@ class TrafficRepository(abc.ABC):
     @abc.abstractmethod
     def get_traffic(self, region_code: str, product_id: ProductId,
                     start: datetime.datetime = None, end: datetime.datetime = None
-                   ) -> pd.Series:
+                    ) -> pd.Series:
         pass

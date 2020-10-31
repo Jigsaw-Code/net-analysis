@@ -33,7 +33,9 @@ from netanalysis.traffic.data import model
 def _to_timestamp(time_point: datetime.datetime):
     return time.mktime(time_point.timetuple())
 
+
 _SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
+
 
 class ApiTrafficRepository(model.TrafficRepository):
     """TrafficRepository that reads the traffic data from Google's Transparency Report."""
@@ -56,7 +58,7 @@ class ApiTrafficRepository(model.TrafficRepository):
         return sorted([e[0] for e in response_proto[0][1]])
 
     def get_traffic(self, region_code: str, product_id: model.ProductId,
-                    start: datetime.datetime=None, end: datetime.datetime=None):
+                    start: datetime.datetime = None, end: datetime.datetime = None):
         DEFAULT_INTERVAL_DAYS = 2 * 365
         POINTS_PER_DAY = 48
         if not end:
