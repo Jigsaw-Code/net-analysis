@@ -38,12 +38,12 @@ After adding new dependencies, run `pipenv install` to refresh the environment.
 
 Run the linter:
 ```
-pylint
+pylint netanalysis
 ```
 
 Run the type checker:
 ```
-mypy
+mypy netanalysis
 ```
 
 Run the unit tests:
