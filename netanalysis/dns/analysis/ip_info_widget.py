@@ -17,7 +17,6 @@
 import asyncio
 import ipaddress
 import pprint
-import socket
 
 import ipywidgets as widgets
 
@@ -40,11 +39,11 @@ def create_ip_info_widget(ip_info: ii.IpInfoService):
             return
         try:
             ip_address = ipaddress.ip_address(ip_field.value)
-        except ValueError as e:
+        except ValueError:
             with output:
                 print("Invalid IP: %s" % ip_field.value)
                 return
-        asys: model.AutonomousSytem = ip_info.get_as(ip_address)
+        asys: model.AutonomousSystem = ip_info.get_as(ip_address)
         with output:
             print("ASN:  %d (%s)" % (asys.id, asys.name))
             # AS Type is is experimental and outdated data.

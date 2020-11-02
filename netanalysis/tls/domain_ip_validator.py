@@ -18,7 +18,6 @@ import certifi
 import ipaddress
 import logging
 import pprint
-import socket
 import ssl
 import sys
 

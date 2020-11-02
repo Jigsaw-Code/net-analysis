@@ -39,10 +39,9 @@ import glob
 import ipaddress
 import logging
 import os.path
-import random
 import socket
 import sys
-from typing import Dict, List, Set
+from typing import Dict, List
 from urllib.parse import urlparse
 
 import iso3166

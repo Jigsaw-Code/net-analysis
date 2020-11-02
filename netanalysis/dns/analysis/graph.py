@@ -12,12 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections import defaultdict
 import ipaddress
 import logging
 import os
 
-from matplotlib import pyplot
 import networkx as nx
 import ujson as json
 

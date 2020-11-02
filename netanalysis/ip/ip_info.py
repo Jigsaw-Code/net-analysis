@@ -81,7 +81,7 @@ def main(args):
 
     ip_address = args.ip_address[0]
     print("Country:  %s (%s)" % ip_info.get_country(ip_address))
-    asys: model.AutonomousSytem = ip_info.get_as(ip_address) 
+    asys: model.AutonomousSystem = ip_info.get_as(ip_address)
     print("ASN:  %d (%s)" % (asys.id, asys.name))
     # AS Type is is experimental and outdated data.
     print("Type: %s" % asys.type.name)

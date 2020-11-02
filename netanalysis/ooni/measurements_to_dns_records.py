@@ -23,11 +23,9 @@ Sample usage:
 """
 
 import argparse
-import asyncio
 import datetime
 import glob
 import ipaddress
-import itertools
 import logging
 import os
 import os.path

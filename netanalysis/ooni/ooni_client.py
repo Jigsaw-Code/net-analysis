@@ -22,7 +22,7 @@ from functools import singledispatch
 import logging
 import os
 import os.path
-from typing import Any, AsyncIterable, Dict, Iterable, List
+from typing import AsyncIterable, Dict, List
 from urllib.parse import urlencode, quote
 
 import aiohttp
