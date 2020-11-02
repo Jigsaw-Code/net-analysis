@@ -163,7 +163,7 @@ def is_success_http_code(http_code):
 
 class DnsResolutionClassifier:
     def __init__(self) -> None:
-        self._good_ips = set()  # type: Set
+        self._good_ips = set()
 
     def _get_ip_key(self, ip):
         return ipaddress.ip_network(ip).supernet(new_prefix=21)
@@ -226,7 +226,7 @@ def as_str(asys):
 
 
 # Cache for ip -> hostname resolutions
-_IP_NAMES = {}  # type: Dict[str, str]
+_IP_NAMES: Dict[str, str] = {}
 
 
 def resolve_ip(ip):

@@ -83,7 +83,7 @@ def _trim_json(json_obj, max_string_size: int):
 
 @_trim_json.register(dict)
 def _(json_dict: dict, max_string_size: int):
-    keys_to_delete = []  # type: str
+    keys_to_delete: List[str] = []
     for key, value in json_dict.items():
         if type(value) == str and len(value) > max_string_size:
             keys_to_delete.append(key)

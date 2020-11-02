@@ -39,7 +39,7 @@ def main(args):
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 
-    report = api.ApiTrafficRepository()  # type: model.TrafficRepository
+    report: model.TrafficRepository = api.ApiTrafficRepository()
     if args.products:
         product_id_list = [model.ProductId[ps.strip().upper()] for ps in args.products.split(",")]
     else:

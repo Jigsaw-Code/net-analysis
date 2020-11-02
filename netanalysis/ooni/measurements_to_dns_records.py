@@ -59,7 +59,7 @@ def get_control_dns_measurement(measurement, measurement_id):
     if not addresses:
         raise ValueError("OONI Control Measurement with empty test_keys.control.dns.addrs: %s" %
                          pprint.pformat(measurement, compact=True))
-    records = []  # type: List[dns.ResourceRecord]
+    records: List[dns.ResourceRecord] = []
     last_cname = urlparse(measurement.get("input")).hostname
     for address in addresses:
         try:
@@ -92,7 +92,7 @@ def get_experiment_dns_measurement(measurement, measurement_id) -> dns.DnsMeasur
     if not ooni_queries:
         raise ValueError("OONI Measurement with empty test_keys.queries: %s" %
                          pprint.pformat(measurement, compact=True))
-    records = []  # type: List[dns.ResourceRecord]
+    records: List[dns.ResourceRecord] = []
     for ooni_query in ooni_queries:
         last_cname = ooni_query.get("hostname")
         if not last_cname:

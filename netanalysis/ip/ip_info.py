@@ -52,8 +52,8 @@ class IpInfoService:
         "Returns country code and country name for the IP"
         # TODO: Consider exposing the confidence value
         try:
-            country_record = self._ip_to_country.country(
-                ip.compressed).country  # type: geoip2.records.Country
+            country_record: geoip2.records.Country = self._ip_to_country.country(
+                ip.compressed).country
             if not country_record:
                 return ("ZZ", "Unknown")
             return (str(country_record.iso_code), str(country_record.name))
@@ -81,7 +81,7 @@ def main(args):
 
     ip_address = args.ip_address[0]
     print("Country:  %s (%s)" % ip_info.get_country(ip_address))
-    asys = ip_info.get_as(ip_address)  # type: model.AutonomousSytem
+    asys: model.AutonomousSytem = ip_info.get_as(ip_address) 
     print("ASN:  %d (%s)" % (asys.id, asys.name))
     # AS Type is is experimental and outdated data.
     print("Type: %s" % asys.type.name)

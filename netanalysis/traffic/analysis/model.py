@@ -61,7 +61,7 @@ class ProductDisruption(object):
         self.product_id = product_id
         self.start = datetime.datetime.max
         self.end = datetime.datetime.min
-        self.anomalies = []  # type: List[AnomalyPoint]
+        self.anomalies: List[AnomalyPoint] = []
         self.absolute_impact = 0.0
         self.relative_impact = 0.0
 
@@ -93,7 +93,7 @@ class RegionDisruption(object):
         self.region_code = region_code
         self.start = datetime.datetime.max
         self.end = datetime.datetime.min
-        self.product_disruptions = []  # type: List[ProductDisruption]
+        self.product_disruptions: List[ProductDisruption] = []
 
     def add_product_disruption(self, product_disruption: ProductDisruption) -> None:
         self.product_disruptions.append(product_disruption)

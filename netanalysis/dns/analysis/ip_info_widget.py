@@ -44,7 +44,7 @@ def create_ip_info_widget(ip_info: ii.IpInfoService):
             with output:
                 print("Invalid IP: %s" % ip_field.value)
                 return
-        asys = ip_info.get_as(ip_address)  # type: model.AutonomousSytem
+        asys: model.AutonomousSytem = ip_info.get_as(ip_address)
         with output:
             print("ASN:  %d (%s)" % (asys.id, asys.name))
             # AS Type is is experimental and outdated data.

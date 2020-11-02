@@ -265,8 +265,8 @@ def main(args):
         product_id_list = [p for p in traffic.ProductId if p.value != traffic.ProductId.UNKNOWN]
 
     try:
-        all_disruptions = find_all_disruptions(
-            repo, repo.list_regions(), product_id_list)  # type: List[model.RegionDisruption]
+        all_disruptions: List[model.RegionDisruption] = find_all_disruptions(
+            repo, repo.list_regions(), product_id_list)
     except KeyboardInterrupt:
         pass
 
