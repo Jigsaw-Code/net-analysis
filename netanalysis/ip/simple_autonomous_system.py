@@ -14,11 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import abc
 import gzip
 from typing import Dict
-
-import geoip2.database
 
 from netanalysis.infrastructure.resources import resource_filename
 
@@ -66,8 +63,8 @@ def UnknownAsOrg(org_id):
 
 class InMemoryAsRepository(model.AsRepository):
     def __init__(self) -> None:
-        self.id_as = {}  # type: Dict[int, model.AutonomousSystem]
-        self.id_org = {}  # type: Dict[str, model.AsOrg]
+        self.id_as: Dict[int, model.AutonomousSystem] = {}
+        self.id_org: Dict[str, model.AsOrg] = {}
 
     def add_as(self, as_number: int, as_name: str, org_id: str,
                source: str, date_changed_str: str) -> None:

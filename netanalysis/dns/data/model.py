@@ -47,7 +47,7 @@ class CnameData(RecordData):
 
 
 class ResourceRecord:
-    def __init__(self, name: str, data: RecordData, ttl: datetime.timedelta=None) -> None:
+    def __init__(self, name: str, data: RecordData, ttl: datetime.timedelta = None) -> None:
         if not name:
             raise ValueError("ResourceRecord requires name")
         self.name = name
@@ -66,11 +66,11 @@ class DnsMeasurement:
                  measurement_id: str,
                  time: datetime.datetime,
                  records: List[ResourceRecord],
-                 resolver_ip: Union[IPv4Address, IPv6Address]=None,
-                 client_asn: int=None,
-                 client_country: str=None,
-                 provenance: str=None,
-                 trust_reason: str=None) -> None:
+                 resolver_ip: Union[IPv4Address, IPv6Address] = None,
+                 client_asn: int = None,
+                 client_country: str = None,
+                 provenance: str = None,
+                 trust_reason: str = None) -> None:
         self.measurement_id = measurement_id
         self.time = time
         self.records = records
@@ -79,6 +79,6 @@ class DnsMeasurement:
         self.client_country = client_country
         self.provenance = provenance
         self.trust_reason = trust_reason
-    
+
     def __repr__(self):
         return "DnsMeasurement(%s)" % str(self.__dict__)

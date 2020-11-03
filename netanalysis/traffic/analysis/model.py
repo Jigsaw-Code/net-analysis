@@ -19,9 +19,10 @@ from typing import List
 
 from netanalysis.traffic.data import model as traffic
 
+
 class AnomalyPoint(object):
     """A single timeline point outside the expected range.
-    
+
     Attributes:
       timestamp: The time of the anomaly
       traffic: The observed traffic number
@@ -60,7 +61,7 @@ class ProductDisruption(object):
         self.product_id = product_id
         self.start = datetime.datetime.max
         self.end = datetime.datetime.min
-        self.anomalies = []  # type: List[AnomalyPoint]
+        self.anomalies: List[AnomalyPoint] = []
         self.absolute_impact = 0.0
         self.relative_impact = 0.0
 
@@ -77,7 +78,7 @@ class ProductDisruption(object):
 
 class RegionDisruption(object):
     """A disruption to traffic in a region.
-    
+
     The region disruption is represented by overlapping disruptions of
     multiple products in that region.
 
@@ -87,11 +88,12 @@ class RegionDisruption(object):
       end: Time of the last anomaly point
       product_disruptions: The list of all observed ProductDisruptions
     """
+
     def __init__(self, region_code: str) -> None:
         self.region_code = region_code
         self.start = datetime.datetime.max
         self.end = datetime.datetime.min
-        self.product_disruptions = []  # type: List[ProductDisruption]
+        self.product_disruptions: List[ProductDisruption] = []
 
     def add_product_disruption(self, product_disruption: ProductDisruption) -> None:
         self.product_disruptions.append(product_disruption)

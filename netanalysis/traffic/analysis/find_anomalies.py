@@ -123,15 +123,15 @@ def _make_report_url(start_date: datetime.datetime, end_date: datetime.datetime,
     chart_padding = (end_date - start_date) * 2
     chart_start_date = start_date - chart_padding
     chart_end_date = min(end_date + chart_padding, datetime.datetime.now())
-    return ("https://transparencyreport.google.com/traffic/overview?%s" % 
-       urllib.parse.urlencode({
-           "lu": "fraction_traffic",
-           "fraction_traffic": "product:%s;start:%s;end:%s;region:%s" % (
-                product_id.value, _to_google_timestamp(chart_start_date),
-                _to_google_timestamp(chart_end_date), region_code
+    return ("https://transparencyreport.google.com/traffic/overview?%s" %
+            urllib.parse.urlencode({
+                "lu": "fraction_traffic",
+                "fraction_traffic": "product:%s;start:%s;end:%s;region:%s" % (
+                    product_id.value, _to_google_timestamp(chart_start_date),
+                    _to_google_timestamp(chart_end_date), region_code
+                )
+            })
             )
-       })
-    )
 
 
 def _make_tor_users_url(start_date: datetime.datetime, end_date: datetime.datetime, region_code: str):
@@ -140,46 +140,47 @@ def _make_tor_users_url(start_date: datetime.datetime, end_date: datetime.dateti
     chart_start_date = start_date - chart_padding
     chart_end_date = min(end_date + chart_padding, datetime.datetime.now())
     return ("https://metrics.torproject.org/userstats-relay-country.html?%s" %
-        urllib.parse.urlencode({
-            "events": "on",
-            "start": chart_start_date.date().isoformat(),
-            "end": chart_end_date.date().isoformat(),
-            "country": region_code.lower()
-        })
-    )
+            urllib.parse.urlencode({
+                "events": "on",
+                "start": chart_start_date.date().isoformat(),
+                "end": chart_end_date.date().isoformat(),
+                "country": region_code.lower()
+            })
+            )
+
 
 def _make_context_web_search_url(start_date: datetime.datetime, end_date: datetime.datetime, region_code: str):
     return ("https://www.google.com/search?%s" %
-        urllib.parse.urlencode({
-            "q": "internet %s" % iso3166.countries.get(region_code).name,
-            "tbs": "cdr:1,cd_min:%s,cd_max:%s" % (
-                start_date.date().strftime("%m/%d/%Y"),
-                end_date.date().strftime("%m/%d/%Y")
+            urllib.parse.urlencode({
+                "q": "internet %s" % iso3166.countries.get(region_code).name,
+                "tbs": "cdr:1,cd_min:%s,cd_max:%s" % (
+                    start_date.date().strftime("%m/%d/%Y"),
+                    end_date.date().strftime("%m/%d/%Y")
+                )
+            })
             )
-        })
-    )
 
 
 def _make_context_twitter_url(start_date: datetime.datetime, end_date: datetime.datetime, region_code: str):
     return ("https://twitter.com/search?%s" %
-        urllib.parse.urlencode({
-            "q": "internet %s since:%s until:%s" % (
-                iso3166.countries.get(region_code).name,
-                start_date.date().isoformat(),
-                end_date.date().isoformat()
+            urllib.parse.urlencode({
+                "q": "internet %s since:%s until:%s" % (
+                    iso3166.countries.get(region_code).name,
+                    start_date.date().isoformat(),
+                    end_date.date().isoformat()
+                )
+            })
             )
-        })
-    )
 
 
 def print_disruption_csv(disruption: model.RegionDisruption) -> None:
     country_name = iso3166.countries.get(disruption.region_code).name
     search_url = _make_context_web_search_url(disruption.start,
-        disruption.start + datetime.timedelta(days=7),
-        disruption.region_code)
+                                              disruption.start + datetime.timedelta(days=7),
+                                              disruption.region_code)
     twitter_url = _make_context_twitter_url(disruption.start,
-        disruption.start + datetime.timedelta(days=7),
-        disruption.region_code)
+                                            disruption.start + datetime.timedelta(days=7),
+                                            disruption.region_code)
     tor_url = _make_tor_users_url(disruption.start, disruption.end, disruption.region_code)
     print("%s (%s) %s %s Context: %s %s %s" % (
         country_name, disruption.region_code, disruption.start.date().isoformat(),
@@ -226,7 +227,7 @@ def find_all_disruptions(repo: traffic.TrafficRepository,
                 if product_id == traffic.ProductId.UNKNOWN:
                     continue
                 logging.info("Processing region %s product %s",
-                                region_code, product_id.name)
+                             region_code, product_id.name)
 
                 full_time_series = repo.get_traffic(region_code, product_id)
                 if full_time_series.empty:
@@ -244,7 +245,7 @@ def find_all_disruptions(repo: traffic.TrafficRepository,
                 major_grouped_disruptions = remove_minor_disruptions(
                     grouped_disruptions)
                 logging.info("Found %d major product disruptions from %d disruptions and %d anomalies",
-                                len(major_grouped_disruptions), len(grouped_disruptions), len(anomalies))
+                             len(major_grouped_disruptions), len(grouped_disruptions), len(anomalies))
                 product_disruptions.extend(major_grouped_disruptions)
             except Exception as error:
                 logging.info("Error processing region %s, product %s: %s", region_code, product_id.name, str(error))
@@ -264,8 +265,8 @@ def main(args):
         product_id_list = [p for p in traffic.ProductId if p.value != traffic.ProductId.UNKNOWN]
 
     try:
-        all_disruptions = find_all_disruptions(
-            repo, repo.list_regions(), product_id_list)  # type: List[RegionDisruption]
+        all_disruptions: List[model.RegionDisruption] = find_all_disruptions(
+            repo, repo.list_regions(), product_id_list)
     except KeyboardInterrupt:
         pass
 
@@ -280,5 +281,5 @@ if __name__ == "__main__":
         description="Finds anomalies in traffic data")
     parser.add_argument("--traffic_data", type=str, required=True, help="The base directory of the traffic data")
     parser.add_argument("--products", type=str,
-        help="Comma-separated list of the products to analyze")
+                        help="Comma-separated list of the products to analyze")
     sys.exit(main(parser.parse_args()))

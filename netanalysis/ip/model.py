@@ -24,6 +24,7 @@ IpAddress = Union[ipaddress.IPv4Address, ipaddress.IPv6Address]
 
 AsOrg = namedtuple("AsOrg", ["id", "name", "country", "source", "date_changed_str"])
 
+
 class AsType(Enum):
     UNKNOWN = 0
     CONTENT = 1

@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections import deque, namedtuple
+from collections import namedtuple
 from enum import Enum
 from itertools import chain
-from typing import Set
 
 import networkx as nx
+
 
 class EdgeClass(Enum):
     UNKNOWN = 0

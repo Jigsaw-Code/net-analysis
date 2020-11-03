@@ -22,7 +22,7 @@ from functools import singledispatch
 import logging
 import os
 import os.path
-from typing import Any, AsyncIterable, Dict, Iterable, List
+from typing import AsyncIterable, Dict, List
 from urllib.parse import urlencode, quote
 
 import aiohttp
@@ -83,7 +83,7 @@ def _trim_json(json_obj, max_string_size: int):
 
 @_trim_json.register(dict)
 def _(json_dict: dict, max_string_size: int):
-    keys_to_delete = []  # type: str
+    keys_to_delete: List[str] = []
     for key, value in json_dict.items():
         if type(value) == str and len(value) > max_string_size:
             keys_to_delete.append(key)
@@ -130,7 +130,7 @@ class ApiOoniClient(OoniClient):
         measurement = await self._get_json(self._api_query_url("measurement/%s" % measurement_id))
         return measurement
 
-    async def list_measurements(self, country_code: str=None, url: str=None):
+    async def list_measurements(self, country_code: str = None, url: str = None):
         # Params order_by and input make the query *a lot* slower.
         # TODO: Consider fetching without input.
         # Unfortunately pagination breaks without order_by

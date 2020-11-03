@@ -9,7 +9,7 @@ _Disclaimer: This is not an officially supported Jigsaw product._
 
 ## Installation
 
-netanalysis is not currently in PyPI.  Instead you can install straight from our Github repository:
+netanalysis is not in PyPI.  Instead you can install straight from our Github repository:
 
 `pip install git+git://github.com/Jigsaw-Code/net-analysis.git@master`
 
@@ -19,6 +19,9 @@ On a `Pipfile`, you can do:
 [packages]
 netanalysis = {git = "git://github.com/Jigsaw-Code/net-analysis.git", ref = "master"}
 ```
+
+You should specify a version tag or a commit if the `master` branch breaks you.
+
 
 ## Tutorials
 
@@ -53,6 +56,6 @@ python -m netanalysis.tls.domain_ip_validator jigsaw.google.com 172.217.10.78
 
 ## Development
 
-[Set up your Python development environment](python_env.md)
+See [Development Setup](development.md).
 
 We welcome your contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details and wishlist.
