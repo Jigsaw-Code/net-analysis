@@ -171,13 +171,11 @@ class OoniBucket:
             StartAfter=f'{self._prefix}{first_date.strftime("%Y%m%d")}',
         )
         for page in pages:
-            print(page)
             for date_entry in page.get('CommonPrefixes', []):
                 date_str  = posixpath.basename(posixpath.dirname(date_entry['Prefix']))
                 date = dt.datetime.strptime(date_str, "%Y%m%d").date()
                 if date > last_date:
                     return
-                print(date_entry)
                 for hour in range(24):
                     for page in paginator.paginate(Bucket=page['Name'],
                             Prefix=f'''{date_entry['Prefix']}{hour:02}/{country}/{measurement_type}/'''):
