@@ -15,7 +15,6 @@
 # limitations under the License.
 
 import argparse
-import asyncio
 import contextlib
 import datetime as dt
 from functools import singledispatch
@@ -23,10 +22,12 @@ import gzip
 import io
 import itertools
 import logging
+import os
+import pathlib
 import posixpath
 from pprint import pprint
 import sys
-from typing import List
+from typing import Iterable, List, NamedTuple
 
 import boto3
 from botocore import UNSIGNED
@@ -44,27 +45,27 @@ def filename_matches(filename: str, measurement_type: str, country: str) -> bool
 
 
 @singledispatch
-def _trim_json(json_obj, max_string_size: int):
+def trim_measurement(json_obj, max_string_size: int):
     return json_obj
 
 
-@_trim_json.register(dict)
+@trim_measurement.register(dict)
 def _(json_dict: dict, max_string_size: int):
     keys_to_delete: List[str] = []
     for key, value in json_dict.items():
         if type(value) == str and len(value) > max_string_size:
             keys_to_delete.append(key)
         else:
-            _trim_json(value, max_string_size)
+            trim_measurement(value, max_string_size)
     for key in keys_to_delete:
         del json_dict[key]
     return json_dict
 
 
-@_trim_json.register(list)
+@trim_measurement.register(list)
 def _(json_list: list, max_string_size: int):
     for item in json_list:
-        _trim_json(item, max_string_size)
+        trim_measurement(item, max_string_size)
     return json_list
 
 
@@ -156,13 +157,19 @@ def list_files_with_index(date: str, measurement_type: str, country: str):
     print(f'Download time: {total_size / 85000000 * 8:.2f}s @ 85 Mbps, {total_size / 10000000 * 8:.2f}s @ 10 Mbps')
 
 
-class OoniBucket:
+class FileEntry(NamedTuple):
+    filename: str
+    test_type: str
+    size: int
+
+
+class Bucket:
     def __init__(self, bucket='ooni-data-eu-fra', prefix='raw/'):
         self._client = boto3.client('s3', config=Config(signature_version=UNSIGNED))
         self._bucket = bucket
         self._prefix = prefix
 
-    def list_files(self, first_date: dt.date, last_date: dt.date, measurement_type: str, country: str):
+    def list_files(self, first_date: dt.date, last_date: dt.date, test_type: str, country: str) -> Iterable[FileEntry]:
         paginator = self._client.get_paginator('list_objects_v2')
         pages = paginator.paginate(
             Bucket=self._bucket,
@@ -172,17 +179,21 @@ class OoniBucket:
         )
         for page in pages:
             for date_entry in page.get('CommonPrefixes', []):
-                date_str  = posixpath.basename(posixpath.dirname(date_entry['Prefix']))
+                date_str = posixpath.basename(posixpath.dirname(date_entry['Prefix']))
                 date = dt.datetime.strptime(date_str, "%Y%m%d").date()
                 if date > last_date:
                     return
                 for hour in range(24):
-                    for page in paginator.paginate(Bucket=page['Name'],
-                            Prefix=f'''{date_entry['Prefix']}{hour:02}/{country}/{measurement_type}/'''):
+                    prefix = f'''{date_entry['Prefix']}{hour:02}/{country}/'''
+                    if test_type:
+                        prefix += f'{test_type}/'
+                    for page in paginator.paginate(Bucket=page['Name'], Prefix=prefix):
                         for entry in page.get('Contents', []):
-                            if entry['Key'].endswith('.jsonl.gz'):
-                                yield entry['Key']
-    
+                            filename = entry['Key']
+                            if posixpath.basename(filename).endswith('.jsonl.gz'):
+                                file_test_type = posixpath.basename(posixpath.dirname(filename))
+                                yield FileEntry(filename, file_test_type, entry['Size'])
+
     def get_file(self, key: str):
         return contextlib.closing(self._client.get_object(Bucket=self._bucket, Key=key)['Body'])
 
@@ -195,13 +206,13 @@ def get_measurements(file):
 
 def main(args):
     logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
-    ooni = OoniBucket()
+    ooni = Bucket()
     # list_files_with_index(args.date, 'web_connectivity', args.country)
-    for filename in ooni.list_files(dt.date(2020, 10, 26), dt.date(2020, 11, 2), 'webconnectivity', args.country):
+    for filename in ooni.list_files(dt.date(2020, 10, 26), dt.date(2020, 11, 2), None, args.country):
         print(filename)
-        with ooni.get_file(filename) as file:
-            for measurement in itertools.islice(get_measurements(file), 1):
-                print(measurement)
+        # with ooni.get_file(filename) as file:
+        #     for measurement in itertools.islice(get_measurements(file), 1):
+        #         print(measurement)
 
 
 if __name__ == "__main__":
