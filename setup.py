@@ -41,6 +41,7 @@ setuptools.setup(
         "aiodns",
         "aiohttp",
         "boto3",
+        "boto3-stubs[s3]",
         "cchardet",
         "certifi",
         "iso3166",
