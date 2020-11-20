@@ -14,8 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import abc
 import argparse
 import contextlib
+from contextlib import closing
 import datetime as dt
 from functools import singledispatch
 import gzip
@@ -23,11 +25,14 @@ import io
 import itertools
 import logging
 import os
+from os import PathLike
 import pathlib
+from pathlib import PosixPath
 import posixpath
 from pprint import pprint
 import sys
-from typing import Iterable, List, NamedTuple
+from tempfile import TemporaryDirectory
+from typing import Callable, ContextManager, IO, Iterable, List, NamedTuple, TextIO, Tuple
 
 import boto3
 from botocore import UNSIGNED
@@ -157,10 +162,17 @@ def list_files_with_index(date: str, measurement_type: str, country: str):
     print(f'Download time: {total_size / 85000000 * 8:.2f}s @ 85 Mbps, {total_size / 10000000 * 8:.2f}s @ 10 Mbps')
 
 
-class FileEntry(NamedTuple):
-    filename: str
-    test_type: str
-    size: int
+class FileEntry:
+    def __init__(self, bucket: 'Bucket', test_type: str, country: str, date: dt.date, file_path: PosixPath, size: int) -> None:
+        self._bucket = bucket
+        self.test_type = test_type
+        self.country = country
+        self.date = date
+        self.file_path = file_path
+        self.size = size
+
+    def get_file(self) -> contextlib.closing(TextIO):
+        return self._bucket.get_file(self.file_path)
 
 
 class Bucket:
@@ -189,19 +201,77 @@ class Bucket:
                         prefix += f'{test_type}/'
                     for page in paginator.paginate(Bucket=page['Name'], Prefix=prefix):
                         for entry in page.get('Contents', []):
-                            filename = entry['Key']
-                            if posixpath.basename(filename).endswith('.jsonl.gz'):
-                                file_test_type = posixpath.basename(posixpath.dirname(filename))
-                                yield FileEntry(filename, file_test_type, entry['Size'])
+                            key = entry['Key']
+                            # Remove prefix
+                            file_path = pathlib.PosixPath(key[len(self._prefix):])
+                            if file_path.name.endswith('.jsonl.gz'):
+                                file_test_type = file_path.parent.name
+                                yield FileEntry(self, file_test_type, country, date, file_path, entry['Size'])
 
-    def get_file(self, key: str):
+    def get_file(self, filename: PosixPath):
+        key = f'{self._prefix}{filename}'
         return contextlib.closing(self._client.get_object(Bucket=self._bucket, Key=key)['Body'])
+
+
+class LocalMeasurements:
+    def __init__(self, data_dir: PathLike) -> None:
+        self._data_dir = pathlib.Path(data_dir)
+
+    def _make_path(self, country: str, test_type: str, date: dt.datetime, basename: str) -> pathlib.Path:
+        return self._data_dir / country / test_type / f'{date:%Y%m%d}' / basename
+
+    def has(self, country: str, test_type: str, date: dt.datetime, basename: str):
+        return self._make_path(country, test_type, date, basename).is_file()
+
+    def save(self, country: str, test_type: str, date: dt.datetime, basename: str, remote_file: IO):
+        with TemporaryDirectory() as temp_dir:
+            temp_filename = pathlib.Path(temp_dir) / basename
+            with gzip.open(temp_filename, mode='wt', encoding='utf-8', newline='\n') as local_file:
+                with gzip.GzipFile(fileobj=remote_file, mode='r') as input_file:
+                    for line in input_file:
+                        # TODO: paralelize IO and CPU
+                        measurement = ujson.loads(line)
+                        ujson.dump(trim_measurement(measurement,  1000), local_file)
+                        local_file.write('\n')
+            file_path = self._make_path(country, test_type, date, basename)
+            os.makedirs(file_path.parent, exist_ok=True)
+            temp_filename.rename(file_path)
+
+    def get_measurements(self, country: str, test_type: str):
+        for root, _, files in os.walk(self._data_dir / country / test_type):
+            for filename in files:
+                with gzip.open(os.path.join(root, filename), 'r') as test_file:
+                    for line in test_file:
+                        yield ujson.loads(line)
+
+
+class CostLimitError(Exception):
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+
+
+def sync_measurements(local_measurements: LocalMeasurements, entries: Iterable[FileEntry], cost_usd_limit=1.00) -> Tuple[int, int]:
+    COST_USD_PER_GIB = 0.09
+    data_limit_bytes = cost_usd_limit / COST_USD_PER_GIB * 2**30
+    downloaded_bytes = 0
+    for entry in entries:
+        if local_measurements.has(entry.country, entry.test_type, entry.date, entry.file_path.name):
+            print(f'Skipping {entry.file_path} [{entry.size:,} bytes]')
+            continue
+        if downloaded_bytes + entry.size > data_limit_bytes:
+            raise CostLimitError(f'Downloaded {downloaded_bytes / 2**30} GiB')
+        print(f'Downloading {entry.file_path} [{entry.size:,} bytes]')
+        with entry.get_file() as remote_file:
+            local_measurements.save(entry.country, entry.test_type, entry.date, entry.file_path.name, remote_file)
+        downloaded_bytes += entry.size
+    download_cost = downloaded_bytes * COST_USD_PER_GIB / 2**30
+    return downloaded_bytes, download_cost
 
 
 def get_measurements(file):
     with io.TextIOWrapper(gzip.GzipFile(fileobj=file, mode='r'), encoding='utf-8') as json_lines:
         for line in json_lines:
-            yield _trim_json(ujson.loads(line), 1000)
+            yield trim_measurement(ujson.loads(line), 1000)
 
 
 def main(args):
