@@ -16,29 +16,36 @@
 
 import abc
 import argparse
+from asyncio.events import get_event_loop
 import contextlib
 from contextlib import closing
 import datetime as dt
 from functools import singledispatch
 import gzip
 import io
-import itertools
 import logging
+from multiprocessing import Pool
+from multiprocessing.pool import ThreadPool
+from sys import maxsize
 import os
 from os import PathLike
 import pathlib
 from pathlib import PosixPath
 import posixpath
 from pprint import pprint
+import queue
 import sys
 from tempfile import TemporaryDirectory
-from typing import Callable, ContextManager, IO, Iterable, List, NamedTuple, TextIO, Tuple
+import threading
+from typing import IO, Iterable, List, Tuple
 
 import boto3
 from botocore import UNSIGNED
 from botocore.config import Config
 import lz4.frame
 import ujson
+
+from netanalysis.ooni.analysis.dns import make_status
 
 
 def filename_matches(filename: str, measurement_type: str, country: str) -> bool:
@@ -144,7 +151,7 @@ def list_files_with_index(date: str, measurement_type: str, country: str):
                         if skip > 0:
                             lz4_file.read(skip)
                         measurement = ujson.loads(lz4_file.read(size=entry['text_size']))
-                        measurement = _trim_json(measurement, 1000)
+                        measurement = trim_measurement(measurement, 1000)
                         bytes_read = entry['text_off'] + entry['text_size']
                         # pprint(measurement)
                         print(dict(
@@ -171,7 +178,7 @@ class FileEntry:
         self.file_path = file_path
         self.size = size
 
-    def get_file(self) -> contextlib.closing(TextIO):
+    def get_file(self) -> IO:
         return self._bucket.get_file(self.file_path)
 
 
@@ -210,7 +217,7 @@ class Bucket:
 
     def get_file(self, filename: PosixPath):
         key = f'{self._prefix}{filename}'
-        return contextlib.closing(self._client.get_object(Bucket=self._bucket, Key=key)['Body'])
+        return self._client.get_object(Bucket=self._bucket, Key=key)['Body']
 
 
 class LocalMeasurements:
@@ -223,16 +230,19 @@ class LocalMeasurements:
     def has(self, country: str, test_type: str, date: dt.datetime, basename: str):
         return self._make_path(country, test_type, date, basename).is_file()
 
-    def save(self, country: str, test_type: str, date: dt.datetime, basename: str, remote_file: IO):
+    def save(self, country: str, test_type: str, date: dt.datetime, basename: str, measurements_file: IO):
         with TemporaryDirectory() as temp_dir:
             temp_filename = pathlib.Path(temp_dir) / basename
-            with gzip.open(temp_filename, mode='wt', encoding='utf-8', newline='\n') as local_file:
-                with gzip.GzipFile(fileobj=remote_file, mode='r') as input_file:
-                    for line in input_file:
-                        # TODO: paralelize IO and CPU
-                        measurement = ujson.loads(line)
-                        ujson.dump(trim_measurement(measurement,  1000), local_file)
-                        local_file.write('\n')
+            with gzip.open(temp_filename, mode='wt', encoding='utf-8', newline='\n') as local_file,\
+                    ThreadPool(processes=1) as line_pool, ThreadPool(processes=1) as write_pool:
+                def trim_line(line):
+                    measurement = ujson.loads(line)
+                    return ujson.dumps(trim_measurement(measurement,  1000))
+                def write_line(line):
+                    local_file.write(line)
+                    local_file.write('\n')
+                for _ in write_pool.imap(write_line, line_pool.imap(trim_line, measurements_file)):
+                    pass
             file_path = self._make_path(country, test_type, date, basename)
             os.makedirs(file_path.parent, exist_ok=True)
             temp_filename.rename(file_path)
@@ -254,16 +264,22 @@ def sync_measurements(local_measurements: LocalMeasurements, entries: Iterable[F
     COST_USD_PER_GIB = 0.09
     data_limit_bytes = cost_usd_limit / COST_USD_PER_GIB * 2**30
     downloaded_bytes = 0
-    for entry in entries:
+
+    def sync_entry(entry: FileEntry):
+        nonlocal downloaded_bytes
         if local_measurements.has(entry.country, entry.test_type, entry.date, entry.file_path.name):
-            print(f'Skipping {entry.file_path} [{entry.size:,} bytes]')
-            continue
+            return f'Skipping {entry.file_path} [{entry.size:,} bytes]'
         if downloaded_bytes + entry.size > data_limit_bytes:
             raise CostLimitError(f'Downloaded {downloaded_bytes / 2**30} GiB')
-        print(f'Downloading {entry.file_path} [{entry.size:,} bytes]')
-        with entry.get_file() as remote_file:
-            local_measurements.save(entry.country, entry.test_type, entry.date, entry.file_path.name, remote_file)
         downloaded_bytes += entry.size
+        with closing(entry.get_file()) as remote_file, gzip.GzipFile(fileobj=remote_file, mode='r') as uncompressed_file:
+            local_measurements.save(entry.country, entry.test_type, entry.date, entry.file_path.name, uncompressed_file)
+        return f'Downloaded {entry.file_path} [{entry.size:,} bytes]'
+
+    with ThreadPool() as sync_pool:
+        for msg in sync_pool.imap(sync_entry, entries):
+            print(msg, flush=True)
+
     download_cost = downloaded_bytes * COST_USD_PER_GIB / 2**30
     return downloaded_bytes, download_cost
 
