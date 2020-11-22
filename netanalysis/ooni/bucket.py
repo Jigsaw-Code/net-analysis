@@ -261,7 +261,7 @@ def sync_measurements(local_measurements: LocalMeasurements, entries: Iterable[F
             local_measurements.save(entry.country, entry.test_type, entry.date, entry.file_path.name, uncompressed_file)
         return f'Downloaded {entry.file_path} [{entry.size:,} bytes]'
 
-    with ThreadPool(processes = 5 * os.cpu_count()) as sync_pool:
+    with ThreadPool(processes=5 * os.cpu_count()) as sync_pool:
         for msg in sync_pool.imap_unordered(sync_entry, entries):
             print(msg, flush=True)
 
