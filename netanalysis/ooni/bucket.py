@@ -14,29 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import abc
 import argparse
-from asyncio.events import get_event_loop
-import contextlib
 from contextlib import closing
 import datetime as dt
 from functools import singledispatch
 import gzip
 import io
 import logging
-from multiprocessing import Pool
 from multiprocessing.pool import ThreadPool
-from sys import maxsize
 import os
 from os import PathLike
 import pathlib
 from pathlib import PosixPath
 import posixpath
-from pprint import pprint
-import queue
 import sys
 from tempfile import TemporaryDirectory
-import threading
 from typing import IO, Iterable, List, Tuple
 
 import boto3
@@ -44,8 +36,6 @@ from botocore import UNSIGNED
 from botocore.config import Config
 import lz4.frame
 import ujson
-
-from netanalysis.ooni.analysis.dns import make_status
 
 
 def filename_matches(filename: str, measurement_type: str, country: str) -> bool:
@@ -233,16 +223,11 @@ class LocalMeasurements:
     def save(self, country: str, test_type: str, date: dt.datetime, basename: str, measurements_file: IO):
         with TemporaryDirectory() as temp_dir:
             temp_filename = pathlib.Path(temp_dir) / basename
-            with gzip.open(temp_filename, mode='wt', encoding='utf-8', newline='\n') as local_file,\
-                    ThreadPool(processes=1) as line_pool, ThreadPool(processes=1) as write_pool:
-                def trim_line(line):
+            with gzip.open(temp_filename, mode='wt', encoding='utf-8', newline='\n') as local_file:
+                for line in measurements_file:
                     measurement = ujson.loads(line)
-                    return ujson.dumps(trim_measurement(measurement,  1000))
-                def write_line(line):
-                    local_file.write(line)
+                    ujson.dump(trim_measurement(measurement,  1000), local_file)
                     local_file.write('\n')
-                for _ in write_pool.imap(write_line, line_pool.imap(trim_line, measurements_file)):
-                    pass
             file_path = self._make_path(country, test_type, date, basename)
             os.makedirs(file_path.parent, exist_ok=True)
             temp_filename.rename(file_path)
@@ -276,8 +261,8 @@ def sync_measurements(local_measurements: LocalMeasurements, entries: Iterable[F
             local_measurements.save(entry.country, entry.test_type, entry.date, entry.file_path.name, uncompressed_file)
         return f'Downloaded {entry.file_path} [{entry.size:,} bytes]'
 
-    with ThreadPool() as sync_pool:
-        for msg in sync_pool.imap(sync_entry, entries):
+    with ThreadPool(processes = 5 * os.cpu_count()) as sync_pool:
+        for msg in sync_pool.imap_unordered(sync_entry, entries):
             print(msg, flush=True)
 
     download_cost = downloaded_bytes * COST_USD_PER_GIB / 2**30
