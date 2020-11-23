@@ -56,7 +56,8 @@ class Measurement:
 
     @property
     def resolver_ip(self) -> int:
-        return ip_address(self.data['test_keys'].get('client_resolver'))
+        ip_str = self.data['test_keys'].get('client_resolver')
+        return ip_address(ip_str) if ip_str else None
 
     @property
     def explorer_url(self) -> str:
