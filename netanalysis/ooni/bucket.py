@@ -28,7 +28,8 @@ import pathlib
 from pathlib import PosixPath
 import posixpath
 import sys
-from tempfile import TemporaryDirectory
+from tempfile import NamedTemporaryFile, TemporaryDirectory
+import tempfile
 from typing import IO, Iterable, List, Tuple
 
 import boto3
@@ -221,16 +222,21 @@ class LocalMeasurements:
         return self._make_path(country, test_type, date, basename).is_file()
 
     def save(self, country: str, test_type: str, date: dt.datetime, basename: str, measurements_file: IO):
-        with TemporaryDirectory() as temp_dir:
-            temp_filename = pathlib.Path(temp_dir) / basename
-            with gzip.open(temp_filename, mode='wt', encoding='utf-8', newline='\n') as local_file:
+        file_path = self._make_path(country, test_type, date, basename)
+        os.makedirs(file_path.parent, exist_ok=True)
+        # We put the temporary file in the same location as the destination because you can't atomically
+        # rename if they are in different devices, as is the case for Kaggle.
+        temp_path = file_path.with_name(f'{file_path.name}.tmp')
+        try:
+            with gzip.open(temp_path, mode='wt', encoding='utf-8', newline='\n') as local_file:
                 for line in measurements_file:
                     measurement = ujson.loads(line)
                     ujson.dump(trim_measurement(measurement,  1000), local_file)
                     local_file.write('\n')
-            file_path = self._make_path(country, test_type, date, basename)
-            os.makedirs(file_path.parent, exist_ok=True)
-            temp_filename.rename(file_path)
+            temp_path.replace(file_path)
+        except:
+            temp_path.unlink()
+            raise
 
     def get_measurements(self, country: str, test_type: str):
         for root, _, files in os.walk(self._data_dir / country / test_type):
