@@ -29,7 +29,7 @@ function is_online() {
   local response
   # The gstatic.com url will return status 204 and no body.
   # It's HTTP so captive portals can intercept with a login page.
-  response=$(curl --silent --dump-header - http://www.gstatic.com/generate_204 2> /dev/null)
+  response=$(curl --silent --dump-header - http://connectivitycheck.gstatic.com/generate_204 2> /dev/null)
   if (($? != 0)); then return 2; fi
   # Test captive portal
   local status=$(echo $response | head -1 | cut -d' ' -f 2)
