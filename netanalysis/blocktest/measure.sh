@@ -110,8 +110,9 @@ function test_dns_injection() {
     echo DNS_INJECTION:INCONCLUSIVE "Could not get root nameserver"
     return 2
   fi
-  if ! declare -r response=$(dig +time=5 @$root_nameserver $domain); then
-    echo DNS_INJECTION:INTERFERENCE "Could not get response from root server"
+  declare response
+  if ! response=$(dig +time=2 @$root_nameserver $domain); then
+    echo DNS_INJECTION:INTERFERENCE "Could not get response"
     return 1
   fi
   declare -r status=$(echo $response | grep -oE 'status: \w+' | cut -d ' ' -f 2)
