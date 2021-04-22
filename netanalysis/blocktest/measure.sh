@@ -133,6 +133,7 @@ function test_dns_blocking() {
   local domain=$1
   test_dns_injection $domain
   if [[ $? == 1 ]]; then
+    # There's no point in testing the system resolver if we know reponses are injected.
     return
   fi
 
