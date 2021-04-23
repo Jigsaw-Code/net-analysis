@@ -48,22 +48,22 @@ function test_http_blocking() {
   if ((http_result == CURLE_OK)); then 
     local expected_reponse=$(curl --silent --show-error --max-time 5 --connect-to ::example.com: http://inexistent.example.com/ 2>&1)
     if diff <(echo "$http_response") <(echo "$expected_reponse") > /dev/null; then
-      echo HTTP_NOT_BLOCKED Got expected response
+      echo HTTP:OK Got expected response
     else
-      echo HTTP_BLOCKED Got injected response
+      echo HTTP:INTERFERENCE Got injected response
       diff <(echo "$http_response") <(echo "$expected_reponse")
     fi
   elif ((http_result == CURLE_GOT_NOTHING)); then
-    echo "HTTP_BLOCKED Unexpected empty response when Host is $domain($http_response)"
+    echo "HTTP:INTERFERENCE Unexpected empty response when Host is $domain($http_response)"
   elif ((http_result == CURLE_RECV_ERROR)); then
-    echo "HTTP_BLOCKED Cannot from established connection when Host is $domain($http_response)"
+    echo "HTTP:INTERFERENCE Cannot from established connection when Host is $domain($http_response)"
   elif ((http_result == CURLE_OPERATION_TIMEDOUT)); then
-    echo "HTTP_LIKELY_BLOCKED Unexpected time out when Host is $domain ($http_response)"
+    echo "HTTP:LIKELY_INTERFERENCE Unexpected time out when Host is $domain ($http_response)"
   elif ((http_result == CURLE_COULDNT_CONNECT)); then
-    echo "HTTP_INCONCLUSIVE Failed to connect to innocuous domain ($http_response)"
+    echo "HTTP:INCONCLUSIVE Failed to connect to innocuous domain ($http_response)"
   else
     # TODO: Find out what errors are guaranteed blocking.
-    echo "HTTP_INCONCLUSIVE Failed to fetch test domain from innocuous domain ($http_response)"
+    echo "HTTP:INCONCLUSIVE Failed to fetch test domain from innocuous domain ($http_response)"
   fi
 }
 
@@ -79,46 +79,76 @@ function test_sni_blocking() {
   curl_error=$(curl --silent --show-error --max-time 5 --connect-to ::example.com: "https://$domain/" 2>&1 >/dev/null)
   curl_result=$?
   if ((curl_result == CURLE_PEER_FAILED_VERIFICATION || curl_result == CURLE_OK)); then 
-    echo "SNI_NOT_BLOCKED Got TLS ServerHello"
+    echo "SNI:OK Got TLS ServerHello"
   elif ((curl_result == CURLE_SSL_CACERT)) && \
        [[ "$curl_error" =~ "no alternative certificate subject name matches target host name" ]]; then
     # On Linux curl outputs CURLE_SSL_CACERT for invalid subject name 🤷.
-    echo "SNI_NOT_BLOCKED Got TLS ServerHello"
+    echo "SNI:OK Got TLS ServerHello"
   elif ((curl_result == CURLE_GOT_NOTHING)); then
-    echo "SNI_BLOCKED Unexpected empty response when SNI is $domain ($curl_error)"
+    echo "SNI:INTERFERENCE Unexpected empty response when SNI is $domain ($curl_error)"
   elif ((curl_result == CURLE_SSL_CONNECT_ERROR)); then
-    echo "SNI_LIKELY_BLOCKED Unexpected TLS error when SNI is $domain ($curl_error)"
+    echo "SNI:LIKELY_INTERFERENCE Unexpected TLS error when SNI is $domain ($curl_error)"
   else
     # TODO: Check for invalid CA chain: that indicates the server is misconfigured or
     # there's MITM going on.
     # TODO: Figure out what errors are guaranteed blocking.
-    echo "SNI_INCONCLUSIVE Failed to get TLS ServerHello ($curl_error)"
+    echo "SNI:INCONCLUSIVE Failed to get TLS ServerHello ($curl_error)"
   fi
 }
 
-# We first check if the there's DNS injection by sending a DNS request to an IP that
-# doesn't run a DNS service. If we get a response, that's proof there's injection.
-# Then we run the system resolver, and verify whether the returned IPs are valid for
+# Test for DNS injection.
+# It queries a root nameserver for the domain and expects a response with
+# NOERROR, no answers and the list of nameservers for the domain's TLD.
+# This method is superior to sending the query to a blackhole because
+# it can provide positive confirmation that the query was not discarded.
+# It relies on the high capacity and availability of the root nameservers
+# and the fact that they are not blockable due to substantial collateral damage.
+function test_dns_injection() {
+  declare -r domain=$1
+  declare -r root_nameserver=$(dig +short . ns | head -1)
+  if [[ -z "$root_nameserver" ]]; then
+    echo DNS_INJECTION:INCONCLUSIVE "Could not get root nameserver"
+    return 2
+  fi
+  declare response
+  if ! response=$(dig +time=2 @$root_nameserver $domain); then
+    echo DNS_INJECTION:INTERFERENCE "Could not get response"
+    return 1
+  fi
+  declare -r status=$(echo $response | grep -oE 'status: \w+' | cut -d ' ' -f 2)
+  declare -ri num_answers=$(echo $response | grep -oE 'ANSWER: \w+' | cut -d ' ' -f 2)
+  declare -ri num_auth=$(echo $response | grep -oE 'AUTHORITY: \w+' | cut -d ' ' -f 2)
+  if [[ $status == 'NOERROR' && $num_answers == 0 && $num_auth -ge 1 ]]; then
+    echo DNS_INJECTION:OK "Received expected response"
+    return 0
+  fi
+  echo DNS_INJECTION:INTERFERENCE "Received unexpected response: $response"
+  return 1
+}
+
+# Tests DNS interference. First tries to detect injection. If no injection,
+# also tests the system resolver and verify whether the returned IPs are valid for
 # the test domain.
 function test_dns_blocking() {
   local domain=$1
-  local injection_test=$(dig +time=2 +short @example.com $domain)
-  if [[ $(echo $injection_test | wc -l)  > 0 ]]; then
-    echo DNS_INJECTION Detected injected answer $injection_test
-  else
-    local ips=$(dig +dnssec +short $domain |  grep -o -E '([0-9]+\.){3}[0-9]+' | sort)
-    local ip_result=$(test_ips "$ips" "$domain")
-    case $(echo $ip_result | cut -d\  -f 1) in
-      IP_INVALID)
-        echo DNS_LYING $ip_result
-        ;;
-      IP_VALID)
-        echo DNS_NOT_BLOCKED $ip_result
-        ;;
-      *)
-        echo DNS_INCONCLUSIVE $ip_result
-    esac
+  test_dns_injection $domain
+  if [[ $? == 1 ]]; then
+    # There's no point in testing the system resolver if we know reponses are injected.
+    return
   fi
+
+  declare -r ips=$(dig +dnssec +short $domain |  grep -o -E '([0-9]+\.){3}[0-9]+' | sort)
+  declare -r ip_result=$(test_ips "$ips" "$domain")
+  case $(echo $ip_result | cut -d\  -f 1) in
+    IP_INVALID)
+      echo SYSTEM_RESOLVER:INTERFERENCE $ip_result
+      ;;
+    IP_VALID)
+      echo SYSTEM_RESOLVER:OK $ip_result
+      ;;
+    *)
+      echo SYSTEM_RESOLVER:INCONCLUSIVE $ip_result
+  esac
 }
 
 # Tests if IPs are valid for a given domain.
