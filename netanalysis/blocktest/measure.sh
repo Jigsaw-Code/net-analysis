@@ -214,17 +214,6 @@ function test_dns_blocking() {
   fi
   # Other tests to try:
   # - Recurse with dnssec and qname minimization
-
-  case $(echo $ip_result | cut -d\  -f 1) in
-    IP_INVALID)
-      echo "  analysis: INTERFERENCE - $ip_result"
-      ;;
-    IP_VALID)
-      echo "  analysis: OK - $ip_result"
-      ;;
-    *)
-      echo "  anslysis: INCONCLUSIVE - $ip_result"
-  esac
 }
 
 function main() {
