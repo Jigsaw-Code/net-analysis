@@ -158,40 +158,25 @@ function test_dns_blocking() {
   echo "  resolver_as: $(echo "$resolver_info" | grep '^org:' | cut -d' ' -f 2-)"
 
   declare -r ips=$(dig +dnssec +short $domain |  grep -o -E '([0-9]+\.){3}[0-9]+' | sort)
-  echo "  response_ips: $ips"
-  declare -r ip_result=$(test_ips "$ips" "$domain")
-  case $(echo $ip_result | cut -d\  -f 1) in
-    IP_INVALID)
-      echo "  analysis: INTERFERENCE - $ip_result"
-      ;;
-    IP_VALID)
-      echo "  analysis: OK - $ip_result"
-      ;;
-    *)
-      echo "  anslysis: INCONCLUSIVE - $ip_result"
-  esac
-}
-
-# Tests if IPs are valid for a given domain.
-# We first check if it's a globally addressable IP (not localhost, local network etc.)
-# Then we query Google DoH to get the IPs and use that as ground truth. If there's
-# overlap, we conclude the IPs are valid.
-# That may fail for load or geo balanced servers. In that case they will likely support
-# HTTPS. If the IP can successfuly establish a TLS connection for the domain, that's proof
-# the IP is valid for the domain.
-# The (ip, domain) validation is vulnerable to censorship (IP and SNI-based blocking), but
-# it does not have to happen at the test network. We could provide a backend for that instead.
-function test_ips() {
-  local ips=$1
-  local domain=$2
+  echo "  response_ips: "$ips
   if [[ $ips == "" ]]; then
-    echo "IP_INVALID Did not get any IPs from DNS resolver"
+    echo "  analysis: INTERFERENCE - Did not get any IPs from the resolver"
     return 1
   fi
+
+  # Test if IPs are valid for a given domain.
+  # We first check if it's a globally addressable IP (not localhost, local network etc.)
+  # Then we query Google DoH to get the IPs and use that as ground truth. If there's
+  # overlap, we conclude the IPs are valid.
+  # That may fail for load or geo balanced servers. In that case they will likely support
+  # HTTPS. If the IP can successfuly establish a TLS connection for the domain, that's proof
+  # the IP is valid for the domain.
+  # The (ip, domain) validation is vulnerable to censorship (IP and SNI-based blocking), but
+  # it does not have to happen at the test network. We could provide a backend for that instead.
   local ip=$(echo "$ips" | head -1)
   local ip_info=$(curl --silent "https://ipinfo.io/$ip")
   if echo "$ip_info" | grep "bogon" > /dev/null; then
-    echo "IP_INVALID IP $ip is bogus"
+    echo "  analysis: INTERFERENCE - Response IP $ip is a bogon"
     return 1
   fi
 
@@ -203,9 +188,10 @@ function test_ips() {
   # TODO: Run a DoH server for measurements on a shared IP address.
   # TODO: Recurse in case of blocking. That would still be vulnerable to blocked authoritatives.
   local ips_from_doh=$(curl --silent --connect-to ::8.8.8.8: https://DNS.GOOGLE/resolve?name=$domain |  grep -o -E '([0-9]+\.){3}[0-9]+' | sort)
+  echo "  ips_from_doh: " $ips_from_doh
   local common_ips=$(comm -12 <(echo "$ips") <(echo "$ips_from_doh"))
   if (( $(echo "$common_ips" | wc -w) > 0)); then
-    echo IP_VALID Resolved IPs [$common_ips] were found on dns.google.com using DNS-over-HTTPS
+    echo "  analysis: OK - Response IPs ["$common_ips"] were found on dns.google.com using DNS-over-HTTPS"
     return 0
   fi
 
@@ -215,18 +201,30 @@ function test_ips() {
   local curl_error
   curl_error=$(curl --silent --show-error --connect-to ::$ip: https://$upper_domain/ 2>&1 > /dev/null) 
   local result=$?
+  echo "  tls_test: ip=$ip, error=$result"
   if ((result == CURLE_OK)) ; then
-    echo "IP_VALID Resolved IP $ip can produce certificate for domain $domain"
+    echo "  analysis: OK - Response IP $ip can produce certificate for domain $domain"
     return 0
   elif ((result == CURLE_PEER_FAILED_VERIFICATION)); then
-    echo "IP_INVALID IP $ip cannot produce domain certificate"
+    echo "  analysis: INTERFERENCE - Response $ip cannot produce domain certificate"
     return 1
   else
-    echo "IP_INCONCLUSIVE Could not validate ips [$ips]. TLS test failed ($curl_error)"
+    echo "  analysis: INCONCLUSIVE - Could not validate ips ["$ips"]. TLS test failed ($curl_error)"
     return 2
   fi
   # Other tests to try:
   # - Recurse with dnssec and qname minimization
+
+  case $(echo $ip_result | cut -d\  -f 1) in
+    IP_INVALID)
+      echo "  analysis: INTERFERENCE - $ip_result"
+      ;;
+    IP_VALID)
+      echo "  analysis: OK - $ip_result"
+      ;;
+    *)
+      echo "  anslysis: INCONCLUSIVE - $ip_result"
+  esac
 }
 
 function main() {
