@@ -111,6 +111,7 @@ function test_sni_blocking() {
 # it can provide positive confirmation that the query was not discarded.
 # It relies on the high capacity and availability of the root nameservers
 # and the fact that they are not blockable due to substantial collateral damage.
+# TODO: Test TCP and upper case.
 function test_dns_injection() {
   echo "DNS_INJECTION"
   declare -r domain=$1
