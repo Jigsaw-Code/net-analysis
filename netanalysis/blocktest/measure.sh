@@ -49,6 +49,7 @@ function test_http_blocking() {
   echo "HTTP"
   local domain=$1
   # TODO: use a domain we control instead of example.com, which may change without notice.
+  # TODO: This breaks if the test domain is hosted in the target host.
   local http_response
   http_response=$(curl --silent --show-error --max-time 5 --connect-to ::example.com: http://$domain/ 2>&1)
   local http_result=$?
@@ -147,7 +148,9 @@ function test_dns_blocking() {
   local domain=$1
   test_dns_injection $domain
   if [[ $? == 1 ]]; then
-    # There's no point in testing the system resolver if we know reponses are injected.
+    # We don't test the system resolver because we know reponses are injected.
+    # TODO: Consider running the system resolver test anyway, since some ISPs redirect
+    # all DNS traffic to their local resolver, even if they do not block.
     return
   fi
   
@@ -187,7 +190,7 @@ function test_dns_blocking() {
   # TODO: Check if dns.google.com is IP or SNI blocked.
   # TODO: Use ClientHello split to avoid more SNI blocking.
   # TODO: Run a DoH server for measurements on a shared IP address.
-  # TODO: Recurse in case of blocking. That would still be vulnerable to blocked authoritatives.
+  # TODO: Recurse in case of blocking. Needs to follow CNAMES. That would still be vulnerable to blocked authoritatives.
   local ips_from_doh=$(curl --silent --connect-to ::8.8.8.8: https://DNS.GOOGLE/resolve?name=$domain |  grep -o -E '([0-9]+\.){3}[0-9]+' | sort)
   echo "  ips_from_doh: " $ips_from_doh
   local common_ips=$(comm -12 <(echo "$ips") <(echo "$ips_from_doh"))
@@ -196,7 +199,7 @@ function test_dns_blocking() {
     return 0
   fi
 
-  # Validate IPs by establishing a TLS connection.
+  # Validate IPs by establishing a TLS connection. This is vulnerable to IP-based blocking.
   # Upper case domain may bypass SNI censorship, reducing inconclusive cases.
   local upper_domain=$(echo $domain | tr [:lower:] [:upper:])
   local curl_error
@@ -204,10 +207,13 @@ function test_dns_blocking() {
   local result=$?
   echo "  tls_test: ip=$ip, error=$result"
   if ((result == CURLE_OK)) ; then
-    echo "  analysis: OK - Response IP $ip can produce certificate for domain $domain"
+    echo "  analysis: OK - Response IP $ip produced certificate for domain $domain"
     return 0
   elif ((result == CURLE_PEER_FAILED_VERIFICATION)); then
-    echo "  analysis: INTERFERENCE - Response $ip cannot produce domain certificate"
+    echo "  analysis: INTERFERENCE - Response $ip could not produce domain certificate"
+    return 1
+  elif ((result == CURLE_SSL_CACERT)); then
+    echo "  analysis: INTERFERENCE - Response $ip returned a certificate with an invalid CA"
     return 1
   else
     echo "  analysis: INCONCLUSIVE - Could not validate ips ["$ips"]. TLS test failed ($curl_error)"
