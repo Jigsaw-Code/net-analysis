@@ -42,70 +42,6 @@ function print_client_info() {
   echo client_as: $(echo "$client_info" | grep '^org:' | cut -d' ' -f 2-)
 }
 
-# The HTTP test works by connecting to a well-behaved baseline that always returns the same output
-# on invalid hostname. We then compare the output for our test domain and a domain we know
-# is invalid. If the result changes, then we know there was injection.
-function test_http_blocking() {
-  echo "HTTP"
-  local domain=$1
-  # TODO: use a domain we control instead of example.com, which may change without notice.
-  # TODO: This breaks if the test domain is hosted in the target host.
-  # TODO: This may capture censorship happening in the test server network.
-  local http_response
-  http_response=$(curl --silent --show-error --max-time 5 --connect-to ::example.com: http://$domain/ 2>&1)
-  local http_result=$?
-  if ((http_result == CURLE_OK)); then 
-    local expected_reponse=$(curl --silent --show-error --max-time 5 --connect-to ::example.com: http://inexistent.example.com/ 2>&1)
-    if diff <(echo "$http_response") <(echo "$expected_reponse") > /dev/null; then
-      echo "  analysis: OK - Got expected response"
-    else
-      echo "  analysis: INTERFERENCE - Got injected response"
-      diff <(echo "$http_response") <(echo "$expected_reponse")
-    fi
-  elif ((http_result == CURLE_GOT_NOTHING)); then
-    echo "  analysis: INTERFERENCE - Unexpected empty response when Host is $domain($http_response)"
-  elif ((http_result == CURLE_RECV_ERROR)); then
-    echo "  analysis: INTERFERENCE - Cannot from established connection when Host is $domain($http_response)"
-  elif ((http_result == CURLE_OPERATION_TIMEDOUT)); then
-    echo "  analysis: LIKELY_INTERFERENCE - Unexpected time out when Host is $domain ($http_response)"
-  elif ((http_result == CURLE_COULDNT_CONNECT)); then
-    echo "  analysis: INCONCLUSIVE - Failed to connect to innocuous domain ($http_response)"
-  else
-    # TODO: Find out what errors are guaranteed blocking.
-    echo "  analysis: INCONCLUSIVE - Failed to fetch test domain from innocuous domain ($http_response)"
-  fi
-}
-
-# The test for SNI-triggered blocking works by connecting to a well-behaved TLS server we know
-# and checking if we can get a ServerHello back when presenting the test domain. If we
-# get a response without a ServerHello, which may be empty or a reset, we know it's blocked.
-# If we get a ServerHello and the CA chain is valid, then we know there was no injection and
-# can conclude there's no blocking.
-function test_sni_blocking() {
-  echo "SNI"
-  local domain=$1
-  # The `local` call will override `#?`, so we don't assign on the declaration.
-  local curl_error
-  curl_error=$(curl --silent --show-error --max-time 5 --connect-to ::example.com: "https://$domain/" 2>&1 >/dev/null)
-  curl_result=$?
-  if ((curl_result == CURLE_PEER_FAILED_VERIFICATION || curl_result == CURLE_OK)); then 
-    echo "  analysis: OK - Got TLS ServerHello"
-  elif ((curl_result == CURLE_SSL_CACERT)) && \
-       [[ "$curl_error" =~ "no alternative certificate subject name matches target host name" ]]; then
-    # On Linux curl outputs CURLE_SSL_CACERT for invalid subject name 🤷.
-    echo "  analysis: OK - Got TLS ServerHello"
-  elif ((curl_result == CURLE_GOT_NOTHING)); then
-    echo "  analysis: INTERFERENCE - Unexpected empty response when SNI is $domain ($curl_error)"
-  elif ((curl_result == CURLE_SSL_CONNECT_ERROR)); then
-    echo "  analysis: LIKELY_INTERFERENCE - Unexpected TLS error when SNI is $domain ($curl_error)"
-  else
-    # TODO: Check for invalid CA chain: that indicates the server is misconfigured or
-    # there's MITM going on.
-    # TODO: Figure out what errors are guaranteed blocking.
-    echo "  analysis: INCONCLUSIVE - Failed to get TLS ServerHello ($curl_error)"
-  fi
-}
-
 # Test for DNS injection.
 # It queries a root nameserver for the domain and expects a response with
 # NOERROR, no answers and the list of nameservers for the domain's TLD.
@@ -224,6 +160,70 @@ function test_dns_blocking() {
   # - Recurse with dnssec and qname minimization
 }
 
+# The HTTP test works by connecting to a well-behaved baseline that always returns the same output
+# on invalid hostname. We then compare the output for our test domain and a domain we know
+# is invalid. If the result changes, then we know there was injection.
+function test_http_blocking() {
+  echo "HTTP"
+  local domain=$1
+  # TODO: use a domain we control instead of example.com, which may change without notice.
+  # TODO: This breaks if the test domain is hosted in the target host.
+  # TODO: This may capture censorship happening in the test server network.
+  local http_response
+  http_response=$(curl --silent --show-error --max-time 5 --connect-to ::example.com: http://$domain/ 2>&1)
+  local http_result=$?
+  if ((http_result == CURLE_OK)); then 
+    local expected_reponse=$(curl --silent --show-error --max-time 5 --connect-to ::example.com: http://inexistent.example.com/ 2>&1)
+    if diff <(echo "$http_response") <(echo "$expected_reponse") > /dev/null; then
+      echo "  analysis: OK - Got expected response"
+    else
+      echo "  analysis: INTERFERENCE - Got injected response"
+      diff <(echo "$http_response") <(echo "$expected_reponse")
+    fi
+  elif ((http_result == CURLE_GOT_NOTHING)); then
+    echo "  analysis: INTERFERENCE - Unexpected empty response when Host is $domain($http_response)"
+  elif ((http_result == CURLE_RECV_ERROR)); then
+    echo "  analysis: INTERFERENCE - Cannot from established connection when Host is $domain($http_response)"
+  elif ((http_result == CURLE_OPERATION_TIMEDOUT)); then
+    echo "  analysis: LIKELY_INTERFERENCE - Unexpected time out when Host is $domain ($http_response)"
+  elif ((http_result == CURLE_COULDNT_CONNECT)); then
+    echo "  analysis: INCONCLUSIVE - Failed to connect to innocuous domain ($http_response)"
+  else
+    # TODO: Find out what errors are guaranteed blocking.
+    echo "  analysis: INCONCLUSIVE - Failed to fetch test domain from innocuous domain ($http_response)"
+  fi
+}
+
+# The test for SNI-triggered blocking works by connecting to a well-behaved TLS server we know
+# and checking if we can get a ServerHello back when presenting the test domain. If we
+# get a response without a ServerHello, which may be empty or a reset, we know it's blocked.
+# If we get a ServerHello and the CA chain is valid, then we know there was no injection and
+# can conclude there's no blocking.
+function test_sni_blocking() {
+  echo "SNI"
+  local domain=$1
+  # The `local` call will override `#?`, so we don't assign on the declaration.
+  local curl_error
+  curl_error=$(curl --silent --show-error --max-time 5 --connect-to ::example.com: "https://$domain/" 2>&1 >/dev/null)
+  curl_result=$?
+  if ((curl_result == CURLE_PEER_FAILED_VERIFICATION || curl_result == CURLE_OK)); then 
+    echo "  analysis: OK - Got TLS ServerHello"
+  elif ((curl_result == CURLE_SSL_CACERT)) && \
+       [[ "$curl_error" =~ "no alternative certificate subject name matches target host name" ]]; then
+    # On Linux curl outputs CURLE_SSL_CACERT for invalid subject name 🤷.
+    echo "  analysis: OK - Got TLS ServerHello"
+  elif ((curl_result == CURLE_GOT_NOTHING)); then
+    echo "  analysis: INTERFERENCE - Unexpected empty response when SNI is $domain ($curl_error)"
+  elif ((curl_result == CURLE_SSL_CONNECT_ERROR)); then
+    echo "  analysis: LIKELY_INTERFERENCE - Unexpected TLS error when SNI is $domain ($curl_error)"
+  else
+    # TODO: Check for invalid CA chain: that indicates the server is misconfigured or
+    # there's MITM going on.
+    # TODO: Figure out what errors are guaranteed blocking.
+    echo "  analysis: INCONCLUSIVE - Failed to get TLS ServerHello ($curl_error)"
+  fi
+}
+
 function main() {
   echo time: "$(date -u)"
   if ! is_online; then
@@ -236,9 +236,9 @@ function main() {
   print_client_info
   echo
 
+  test_dns_blocking $domain
   test_http_blocking $domain
   test_sni_blocking $domain
-  test_dns_blocking $domain
 
   # TODO: Test IP blocking
 }
