@@ -50,6 +50,7 @@ function test_http_blocking() {
   local domain=$1
   # TODO: use a domain we control instead of example.com, which may change without notice.
   # TODO: This breaks if the test domain is hosted in the target host.
+  # TODO: This may capture censorship happening in the test server network.
   local http_response
   http_response=$(curl --silent --show-error --max-time 5 --connect-to ::example.com: http://$domain/ 2>&1)
   local http_result=$?
