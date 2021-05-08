@@ -203,6 +203,8 @@ function test_sni_blocking() {
   echo "SNI"
   local domain=$1
   # The `local` call will override `#?`, so we don't assign on the declaration.
+  # Consider using curl --http1.1 https://example.com/ --write-out 'tls_error=%{ssl_verify_result} http_status=%{http_code} header_size=%{size_header} body_size=%{size_download} redirect_url=%{redirect_url} dns=%{time_namelookup} tcp_connect=%{time_connect} tls_connect=%{time_appconnect} request_start=%{time_pretransfer} first_response_byte=%{time_starttransfer}\n' --insecure
+  # See https://blog.cloudflare.com/a-question-of-timing/
   local curl_error
   curl_error=$(curl --silent --show-error --max-time 5 --connect-to ::example.com: "https://$domain/" 2>&1 >/dev/null)
   curl_result=$?
