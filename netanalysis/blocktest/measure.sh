@@ -24,16 +24,23 @@ declare -ir CURLE_GOT_NOTHING=52  # Injected FIN triggers this.
 declare -ir CURLE_RECV_ERROR=56  # We get this for connection reset by peer.
 declare -ir CURLE_SSL_CACERT=60  # Could be MITM.
 
-function is_online() {
+function test_connectivity() {
   # Test signal
   local response
   # The gstatic.com url will return status 204 and no body.
   # It's HTTP so captive portals can intercept with a login page.
   response=$(curl --silent --dump-header - http://connectivitycheck.gstatic.com/generate_204 2> /dev/null)
-  if (($? != 0)); then return 2; fi
+  if (($? != 0)); then
+    echo "You are OFFLINE (Failed to fetch http://connectivitycheck.gstatic.com/generate_204)"
+    return 1
+  fi
   # Test captive portal
   local status=$(echo $response | head -1 | cut -d' ' -f 2)
-  ((status == "204"))
+  if ((status != "204")); then
+    echo "You are OFFLINE (Captive portal detected)"
+    return 2
+  fi
+  return 0
 }
 
 function print_client_info() {
@@ -228,8 +235,7 @@ function test_sni_blocking() {
 
 function main() {
   echo time: "$(date -u)"
-  if ! is_online; then
-    echo "You are offline"
+  if ! test_connectivity; then
     return 1
   fi
 
