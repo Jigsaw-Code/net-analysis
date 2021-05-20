@@ -66,14 +66,14 @@ class Domain:
         return False
 
     def path_is_valid(self, dns_path: DnsPath) -> str:
+        if self.path_matches_control(dns_path):
+            self.add_path(dns_path)
+            return 'OK_MATCHES_CONTROL'
+
         # TODO: Error
         for ip in dns_path.ips:
             if not ip.is_global:
                 return 'BAD_NON_GLOBAL_IP'
-
-        if self.path_matches_control(dns_path):
-            self.add_path(dns_path)
-            return 'OK_MATCHES_CONTROL'
 
         # Try local resolution and TLS. Should persist resolutions.
         return 'INCONCLUSIVE_CHECK_IPS'
