@@ -21,6 +21,11 @@ import urllib.parse as up
 
 # Base format specified at https://github.com/ooni/spec/blob/master/data-formats/df-000-base.md
 
+def _ParseAsnText(asn_text: str) -> int:
+    num_text = asn_text[2:]
+    if not num_text:
+        return 0
+    return int(num_text)
 
 class Measurement:
     def __init__(self, measurement: dict) -> None:
@@ -44,18 +49,14 @@ class Measurement:
 
     @property
     def asn(self) -> int:
-        return int(self.data.get('probe_asn', 'AS0')[2:])
-
-    @property
-    def asn(self) -> int:
-        return int(self.data.get('probe_asn', 'AS0')[2:])
+        return _ParseAsnText(self.data.get('probe_asn', 'AS0'))
 
     @property
     def resolver_asn(self) -> int:
-        return int(self.data.get('resolver_asn', 'AS0')[2:])
+        return _ParseAsnText(self.data.get('resolver_asn', 'AS0'))
 
     @property
-    def resolver_ip(self) -> int:
+    def resolver_ip(self) -> ip_address:
         ip_str = self.data['test_keys'].get('client_resolver')
         return ip_address(ip_str) if ip_str else None
 
