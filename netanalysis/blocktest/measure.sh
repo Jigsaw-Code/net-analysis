@@ -24,16 +24,23 @@ declare -ir CURLE_GOT_NOTHING=52  # Injected FIN triggers this.
 declare -ir CURLE_RECV_ERROR=56  # We get this for connection reset by peer.
 declare -ir CURLE_SSL_CACERT=60  # Could be MITM.
 
-function is_online() {
+function test_connectivity() {
   # Test signal
   local response
   # The gstatic.com url will return status 204 and no body.
   # It's HTTP so captive portals can intercept with a login page.
   response=$(curl --silent --dump-header - http://connectivitycheck.gstatic.com/generate_204 2> /dev/null)
-  if (($? != 0)); then return 2; fi
+  if (($? != 0)); then
+    echo "You are OFFLINE (Failed to fetch http://connectivitycheck.gstatic.com/generate_204)"
+    return 1
+  fi
   # Test captive portal
   local status=$(echo $response | head -1 | cut -d' ' -f 2)
-  ((status == "204"))
+  if ((status != "204")); then
+    echo "You are OFFLINE (Captive portal detected)"
+    return 2
+  fi
+  return 0
 }
 
 function print_client_info() {
@@ -203,6 +210,8 @@ function test_sni_blocking() {
   echo "SNI"
   local domain=$1
   # The `local` call will override `#?`, so we don't assign on the declaration.
+  # Consider using curl --http1.1 https://example.com/ --write-out 'tls_error=%{ssl_verify_result} http_status=%{http_code} header_size=%{size_header} body_size=%{size_download} redirect_url=%{redirect_url} dns=%{time_namelookup} tcp_connect=%{time_connect} tls_connect=%{time_appconnect} request_start=%{time_pretransfer} first_response_byte=%{time_starttransfer}\n' --insecure
+  # See https://blog.cloudflare.com/a-question-of-timing/
   local curl_error
   curl_error=$(curl --silent --show-error --max-time 5 --connect-to ::example.com: "https://$domain/" 2>&1 >/dev/null)
   curl_result=$?
@@ -226,8 +235,7 @@ function test_sni_blocking() {
 
 function main() {
   echo time: "$(date -u)"
-  if ! is_online; then
-    echo "You are offline"
+  if ! test_connectivity; then
     return 1
   fi
 
