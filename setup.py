@@ -38,8 +38,6 @@ setuptools.setup(
     ],
     python_requires='>=3.6.9',
     install_requires=[
-        "aiodns",
-        "aiohttp",
         "boto3",
         "cchardet",
         "certifi",
@@ -50,7 +48,6 @@ setuptools.setup(
         "google-cloud-bigquery",
         "matplotlib",
         "pandas",
-        "plotly",
         "pydot",
         "scipy",
         "statsmodels",
