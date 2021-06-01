@@ -15,9 +15,9 @@ Use `--first_date` and `--last_date` to restrict the fetch to a specific, inclus
     python -m netanalysis.ooni.data.fetch_measurements --output_dir=./ooni_data/ --country=BY --first_date=2021-01-01 --last_date=2021-01-31
 
 ### Data trimming
-By default the tool will drop any measurement field that are longer than 1000 characters in order to save space. You can change that dy setting a different value for `--max_string_size`.
+By default the tool will drop any measurement field that are longer than 1000 characters in order to save space. You can change that by passing a different value for `--max_string_size`.
 
-This is primarily intended to drop the response bodies, which are often not needed and takes most of the space. For the date range example above, we download 158 MiB of data, but only store 18 MiB after the trimming, a nearly 9x difference!
+This is primarily intended to drop the response bodies, which are often not needed and take most of the space. For the date range example above, we download 158 MiB of data, but only store 18 MiB after the trimming, a nearly 9x difference!
 
 ### Test types
 By default the tool will download `webconnectivity` tests only. You can select a different test type with `--test_type`.
