@@ -25,9 +25,6 @@ from botocore import UNSIGNED
 from botocore.config import Config
 import ujson
 
-# TODO:
-# - Add comments
-# - Support old measurements
 class FileEntry:
     """Represents a file entry in the OONI S3 Bucket."""
     def __init__(self, s3_client, test_type: str, country: str, date: dt.date, url: SplitResult, size: int) -> None:
@@ -48,6 +45,7 @@ class FileEntry:
 
 # Example files: `aws --no-sign-request s3 ls s3://ooni-data-eu-fra/raw/20210526/00/VE/webconnectivity/`
 # First directory in the new bucket is 20201020/
+# TODO(fortuna): Support old measurements.
 class OoniClient:
     def __init__(self, bucket='ooni-data-eu-fra', prefix='raw/'):
         self._client = boto3.client('s3', config=Config(signature_version=UNSIGNED))
