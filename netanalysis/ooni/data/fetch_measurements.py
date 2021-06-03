@@ -66,10 +66,12 @@ def main(args):
         logging.basicConfig(level=logging.DEBUG)
 
     ooni = ooni_client.OoniClient()
+    num_measurements = 0
     file_entries = ooni.list_files(
         args.first_date, args.last_date, args.test_type, args.country)
 
     def fetch_file(entry: ooni_client.FileEntry):
+        nonlocal num_measurements
         basename = pathlib.PurePosixPath(entry.url.path).name
         # Fix .json.lz4 and .tar.lz4 filenames.
         if not basename.endswith('.jsonl.gz'):
@@ -83,6 +85,7 @@ def main(args):
                 f'Downloaded {ooni.bytes_downloaded / 2**20} MiB')
         with gzip.open(target_filename, mode='wt', encoding='utf-8', newline='\n') as target_file:
             for measurement in entry.get_measurements():
+                num_measurements += 1
                 m = trim_measurement(measurement, args.max_string_size)
                 ujson.dump(m, target_file)
                 target_file.write('\n')
@@ -92,7 +95,7 @@ def main(args):
         for msg in sync_pool.imap_unordered(fetch_file, file_entries):
             logging.info(msg)
 
-    logging.info(f'Download size: {ooni.bytes_downloaded/2**20:0.3f} MiB, Estimated Cost: ${ooni.cost_usd:02f}')
+    logging.info(f'Measurements: {num_measurements}, Downloaded {ooni.bytes_downloaded/2**20:0.3f} MiB, Estimated Cost: ${ooni.cost_usd:02f}')
 
 
 def _parse_date_flag(date_str: str) -> dt.date:
