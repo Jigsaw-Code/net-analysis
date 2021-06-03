@@ -1,6 +1,11 @@
 # OONI Measurement Data
 
-This directory contains libraries and tools to fetch [OONI data](https://ooni.org/data/). This tool supports access to the mesurements on both the new `ooni-data-eu-fra` and the old `ooni-data` OONI S3 buckets.
+This directory contains libraries and tools to fetch [OONI data](https://ooni.org/data/). This tool supports access to the measurements on both the new `ooni-data-eu-fra` and the old `ooni-data` OONI S3 buckets.
+
+You can install the library directly from Gihub with
+
+    pip install git+git://github.com/Jigsaw-Code/net-analysis.git@master
+
 
 ## Fetch the measurement data
 
