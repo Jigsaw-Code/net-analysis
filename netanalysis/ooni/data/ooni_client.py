@@ -43,8 +43,8 @@ class OoniClient:
     def __init__(self):
         s3_client = boto3.client(
             's3', config=Config(signature_version=UNSIGNED))
-        self._new_client = NewOoniClient(s3_client)
-        self._legacy_client = LegacyOoniClient(s3_client)
+        self._new_client = _2020OoniClient(s3_client)
+        self._legacy_client = _LegacyOoniClient(s3_client)
 
     @property
     def num_list_requests(self) -> int:
@@ -71,7 +71,7 @@ class OoniClient:
         yield from self._new_client.list_files(first_date, last_date, test_type, country)
 
 
-class NewOoniClient:
+class _2020OoniClient:
     _BUCKET = 'ooni-data-eu-fra'
     _PREFIX = 'raw/'
 
@@ -87,8 +87,8 @@ class NewOoniClient:
         if last_date < dt.date(2020, 10, 20):
             return
         paginator = self._s3_client.get_paginator('list_objects_v2')
-        pages = paginator.paginate(Bucket=NewOoniClient._BUCKET, Delimiter='/', Prefix=NewOoniClient._PREFIX,
-                                   StartAfter=f'{NewOoniClient._PREFIX}{first_date.strftime("%Y%m%d")}')
+        pages = paginator.paginate(Bucket=_2020OoniClient._BUCKET, Delimiter='/', Prefix=_2020OoniClient._PREFIX,
+                                   StartAfter=f'{_2020OoniClient._PREFIX}{first_date.strftime("%Y%m%d")}')
         for page in pages:
             self.num_list_requests += 1
             for entry in page.get('CommonPrefixes', []):
@@ -121,7 +121,7 @@ class NewOoniClient:
                 yield ujson.loads(line)
 
 
-class LegacyOoniClient:
+class _LegacyOoniClient:
     _BUCKET = 'ooni-data'
     _PREFIX = 'autoclaved/jsonl.tar.lz4/'
 
@@ -136,7 +136,7 @@ class LegacyOoniClient:
         parts = basename.split('-')
         if len(parts) < 4:
             return False
-        return parts[1] == country and LegacyOoniClient._test_type_for_match(parts[3]) == test_type
+        return parts[1] == country and _LegacyOoniClient._test_type_for_match(parts[3]) == test_type
 
     @staticmethod
     def _files_from_index(json_lines: Iterable[str], test_type: str, country: str):
@@ -159,7 +159,7 @@ class LegacyOoniClient:
                 current_file = {}
             elif entry['type'] == 'report':
                 report_name = entry['textname']
-                if LegacyOoniClient._filename_matches(report_name, test_type, country):
+                if _LegacyOoniClient._filename_matches(report_name, test_type, country):
                     output_measurements = True
             elif entry['type'] == '/report':
                 output_measurements = False
@@ -193,8 +193,8 @@ class LegacyOoniClient:
         if first_date > dt.date(2020, 10, 21):
             return
         paginator = self._s3_client.get_paginator('list_objects_v2')
-        pages = paginator.paginate(Bucket=LegacyOoniClient._BUCKET, Delimiter='/', Prefix=LegacyOoniClient._PREFIX,
-                                   StartAfter=f'{LegacyOoniClient._PREFIX}{first_date.strftime("%Y-%m-%d")}')
+        pages = paginator.paginate(Bucket=_LegacyOoniClient._BUCKET, Delimiter='/', Prefix=_LegacyOoniClient._PREFIX,
+                                   StartAfter=f'{_LegacyOoniClient._PREFIX}{first_date.strftime("%Y-%m-%d")}')
         for page in pages:
             self.num_list_requests += 1
             for entry in page.get('CommonPrefixes', []):
@@ -204,19 +204,19 @@ class LegacyOoniClient:
                 if date > last_date:
                     return
                 for file_entry in self._list_files_with_index(date_dir, test_type, country):
-                    url = SplitResult('s3', LegacyOoniClient._BUCKET, f'{LegacyOoniClient._PREFIX}{file_entry["filename"]}', None, None)
-                    yield FileEntry(lambda: self._get_measurements(file_entry), test_type, country, date, url, LegacyOoniClient._frame_bytes(file_entry['frames']))
+                    url = SplitResult('s3', _LegacyOoniClient._BUCKET, f'{_LegacyOoniClient._PREFIX}{file_entry["filename"]}', None, None)
+                    yield FileEntry(lambda: self._get_measurements(file_entry), test_type, country, date, url, _LegacyOoniClient._frame_bytes(file_entry['frames']))
 
     def _list_files_with_index(self, date_dir: str, test_type: str, country: str) -> Iterable[Dict]:
         s3_object = self._s3_client.get_object(
-            Bucket=LegacyOoniClient._BUCKET, Key=f'{date_dir}index.json.gz')
+            Bucket=_LegacyOoniClient._BUCKET, Key=f'{date_dir}index.json.gz')
         self.num_get_requests += 1
         self.bytes_downloaded += s3_object['ContentLength']
         with gzip.open(s3_object['Body'], mode='rt', encoding='utf8') as json_lines:
-            yield from LegacyOoniClient._files_from_index(json_lines, test_type, country)
+            yield from _LegacyOoniClient._files_from_index(json_lines, test_type, country)
 
     def _get_measurements(self, file_entry: Dict) -> Iterable[Dict]:
-        s3_key = f'{LegacyOoniClient._PREFIX}{file_entry["filename"]}'
+        s3_key = f'{_LegacyOoniClient._PREFIX}{file_entry["filename"]}'
         frames = file_entry['frames']
         fi = 0
         while fi < len(frames):
@@ -229,7 +229,7 @@ class LegacyOoniClient:
                 segment.append(frames[fi])
                 fi += 1
             stream = self._s3_client.get_object(
-                Bucket=LegacyOoniClient._BUCKET, Key=s3_key, Range=f'{segment_start}-{segment_end - 1}')['Body']
+                Bucket=_LegacyOoniClient._BUCKET, Key=s3_key, Range=f'{segment_start}-{segment_end - 1}')['Body']
             self.num_get_requests += 1
             self.bytes_downloaded += segment_end - segment_start
             with lz4.frame.LZ4FrameFile(stream, mode='r') as lz4_file:
