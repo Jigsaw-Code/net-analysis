@@ -24,7 +24,6 @@ import os
 import pathlib
 import sys
 from typing import List
-from botocore.vendored.six import b
 
 import ujson
 

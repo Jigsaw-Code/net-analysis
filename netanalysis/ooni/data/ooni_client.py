@@ -17,7 +17,7 @@ from contextlib import closing
 import gzip
 from pathlib import PosixPath
 import posixpath
-from typing import Callable, Dict, Iterable, List
+from typing import Callable, Dict, Iterable
 from urllib.parse import SplitResult
 
 import boto3
