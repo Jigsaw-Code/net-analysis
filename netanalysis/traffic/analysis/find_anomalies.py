@@ -34,9 +34,9 @@ logging.getLogger().setLevel(logging.INFO)
 
 
 def get_expectations_1(time_series: pd.Series) -> pd.DataFrame:
-    # Sets frequency to 8 weeks.
+    # Sets period to 8 weeks.
     components = sm.tsa.seasonal_decompose(
-        time_series, freq=7 * 4 * 2, model="additive", two_sided=False)
+        time_series, period=7 * 4 * 2, model="additive", two_sided=False)
     expected = components.trend + components.seasonal
     max_delta = 3 * components.resid.std()
     lower_bound = expected - max_delta
@@ -48,9 +48,9 @@ def get_expectations_1(time_series: pd.Series) -> pd.DataFrame:
 
 
 # def get_expectations_2(time_series):
-#     # Sets frequency to 8 weeks.
+#     # Sets period to 8 weeks.
 #     components = sm.tsa.seasonal_decompose(
-#         time_series, freq=7 * 4 * 2, model="additive", two_sided=False)
+#         time_series, period=7 * 4 * 2, model="additive", two_sided=False)
 #     expected = components.trend + components.seasonal
 #     window_days = 365
 #     resid_median = components.resid.rolling(
