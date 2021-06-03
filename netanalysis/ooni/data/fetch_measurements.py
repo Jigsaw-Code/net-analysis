@@ -29,6 +29,7 @@ import ujson
 
 from . import ooni_client
 
+
 @singledispatch
 def trim_measurement(json_obj, max_string_size: int):
     return json_obj
@@ -58,47 +59,56 @@ class CostLimitError(Exception):
     def __init__(self, message: str) -> None:
         super().__init__(message)
 
+
 def main(args):
     logging.basicConfig(level=logging.INFO)
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
-    
+
     ooni = ooni_client.OoniClient()
-    file_entries = ooni.list_files(args.first_date, args.last_date, args.test_type, args.country)
-    COST_USD_PER_GIB = 0.09
-    data_limit_bytes = args.cost_limit_usd / COST_USD_PER_GIB * 2**30
-    downloaded_bytes = 0
+    num_measurements = 0
+    file_entries = ooni.list_files(
+        args.first_date, args.last_date, args.test_type, args.country)
 
     def fetch_file(entry: ooni_client.FileEntry):
+        nonlocal num_measurements
         basename = pathlib.PurePosixPath(entry.url.path).name
-        target_filename = args.output_dir / entry.country / f'{entry.date:%Y-%m-%d}' / basename
+        # Fix .json.lz4 and .tar.lz4 filenames.
+        if not basename.endswith('.jsonl.gz'):
+            basename = basename.rsplit('.', 2)[0] + '.jsonl.gz'
+
+        target_filename = args.output_dir / entry.country / \
+            f'{entry.date:%Y-%m-%d}' / basename
         os.makedirs(target_filename.parent, exist_ok=True)
-        nonlocal downloaded_bytes
-        if downloaded_bytes + entry.size > data_limit_bytes:
-            raise CostLimitError(f'Downloaded {downloaded_bytes / 2**30} GiB')
-        downloaded_bytes += entry.size
+        if ooni.cost_usd > args.cost_limit_usd:
+            raise CostLimitError(
+                f'Downloaded {ooni.bytes_downloaded / 2**20} MiB')
         with gzip.open(target_filename, mode='wt', encoding='utf-8', newline='\n') as target_file:
-          for measurement in entry.get_measurements():
-              m = trim_measurement(measurement, args.max_string_size)
-              ujson.dump(m, target_file)
-              target_file.write('\n')
+            for measurement in entry.get_measurements():
+                num_measurements += 1
+                m = trim_measurement(measurement, args.max_string_size)
+                ujson.dump(m, target_file)
+                target_file.write('\n')
         return f'Downloaded {entry.url.geturl()} [{entry.size:,} bytes]'
-    
+
     with ThreadPool(processes=5 * os.cpu_count()) as sync_pool:
         for msg in sync_pool.imap_unordered(fetch_file, file_entries):
             logging.info(msg)
-    
-    download_cost = downloaded_bytes * COST_USD_PER_GIB / 2**30
-    logging.info(f'Download size: {downloaded_bytes/2**30:0.6f} GiB, Estimated Cost: ${download_cost:02f}')
+
+    logging.info(f'Measurements: {num_measurements}, Downloaded {ooni.bytes_downloaded/2**20:0.3f} MiB, Estimated Cost: ${ooni.cost_usd:02f}')
+
 
 def _parse_date_flag(date_str: str) -> dt.date:
     return dt.datetime.strptime(date_str, "%Y-%m-%d").date()
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Fetch OONI measurements")
     parser.add_argument("--country", type=str, required=True)
-    parser.add_argument("--first_date", type=_parse_date_flag, default=dt.date.today() - dt.timedelta(days=14))
-    parser.add_argument("--last_date", type=_parse_date_flag, default=dt.date.today())
+    parser.add_argument("--first_date", type=_parse_date_flag,
+                        default=dt.date.today() - dt.timedelta(days=14))
+    parser.add_argument("--last_date", type=_parse_date_flag,
+                        default=dt.date.today())
     parser.add_argument("--test_type", type=str, default='webconnectivity')
     parser.add_argument("--max_string_size", type=int, default=1000)
     parser.add_argument("--cost_limit_usd", type=float, default=1.00)

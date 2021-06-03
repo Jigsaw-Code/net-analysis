@@ -43,6 +43,7 @@ setuptools.setup(
         "certifi",
         "iso3166",
         "jupyter",
+        "lz4",
         "networkx",
         "geoip2",
         "google-cloud-bigquery",
