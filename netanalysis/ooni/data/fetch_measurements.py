@@ -24,6 +24,7 @@ import os
 import pathlib
 import sys
 from typing import List
+from botocore.vendored.six import b
 
 import ujson
 
@@ -65,18 +66,17 @@ def main(args):
     
     ooni = ooni_client.OoniClient()
     file_entries = ooni.list_files(args.first_date, args.last_date, args.test_type, args.country)
-    COST_USD_PER_GIB = 0.09
-    data_limit_bytes = args.cost_limit_usd / COST_USD_PER_GIB * 2**30
-    downloaded_bytes = 0
 
     def fetch_file(entry: ooni_client.FileEntry):
         basename = pathlib.PurePosixPath(entry.url.path).name
+        # Fix .json.lz4 and .tar.lz4 filenames.
+        if not basename.endswith('.jsonl.gz'):
+            basename = basename.rsplit('.', 2)[0] + '.jsonl.gz'
+
         target_filename = args.output_dir / entry.country / f'{entry.date:%Y-%m-%d}' / basename
         os.makedirs(target_filename.parent, exist_ok=True)
-        nonlocal downloaded_bytes
-        if downloaded_bytes + entry.size > data_limit_bytes:
-            raise CostLimitError(f'Downloaded {downloaded_bytes / 2**30} GiB')
-        downloaded_bytes += entry.size
+        if ooni.cost_usd > args.cost_limit_usd:
+            raise CostLimitError(f'Downloaded {ooni.bytes_downloaded / 2**20} MiB')
         with gzip.open(target_filename, mode='wt', encoding='utf-8', newline='\n') as target_file:
           for measurement in entry.get_measurements():
               m = trim_measurement(measurement, args.max_string_size)
@@ -88,8 +88,7 @@ def main(args):
         for msg in sync_pool.imap_unordered(fetch_file, file_entries):
             logging.info(msg)
     
-    download_cost = downloaded_bytes * COST_USD_PER_GIB / 2**30
-    logging.info(f'Download size: {downloaded_bytes/2**30:0.6f} GiB, Estimated Cost: ${download_cost:02f}')
+    logging.info(f'Download size: {ooni.bytes_downloaded/2**20:0.3f} MiB, Estimated Cost: ${ooni.cost_usd:02f}')
 
 def _parse_date_flag(date_str: str) -> dt.date:
     return dt.datetime.strptime(date_str, "%Y-%m-%d").date()

@@ -1,6 +1,6 @@
 # OONI Measurement Data
 
-This directory contains libraries and tools to fetch [OONI data](https://ooni.org/data/). This tool only supports access to the mesurements on the new `ooni-data-eu-fra` OONI S3 bucket, which started to be populated on 2020-10-20. Support for the old data is a to do.
+This directory contains libraries and tools to fetch [OONI data](https://ooni.org/data/). This tool supports access to the mesurements on both the new `ooni-data-eu-fra` and the old `ooni-data` OONI S3 buckets.
 
 ## Fetch the measurement data
 
