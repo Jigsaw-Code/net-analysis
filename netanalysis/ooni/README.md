@@ -37,4 +37,9 @@ You can use the aws cli to access the bucket. For example:
 aws --no-sign-request s3 ls s3://ooni-data-eu-fra/raw/20210526/00/VE/webconnectivity/
 ```
 
-However there's no way to easily select a country, measurement type or date range.
+You can fetch data for a country, test type and date with this:
+```
+aws --no-sign-request s3 sync --recursive --exclude '*' --include '*/VE/webconnectivity/*.jsonl.gz' 's3://ooni-data-eu-fra/raw/20210501' ./ooni-data/20210501/
+```
+
+However that's only for the new bucket. Our script supports the old bucket, is faster, allows you to specify a date range, limits cost, and trims the stored data.
