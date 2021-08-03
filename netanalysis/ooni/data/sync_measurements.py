@@ -59,6 +59,13 @@ class CostLimitError(Exception):
     def __init__(self, message: str) -> None:
         super().__init__(message)
 
+def _make_local_path(output_dir: pathlib.Path, entry: ooni_client.FileEntry) -> pathlib.Path:
+    basename = pathlib.PurePosixPath(entry.url.path).name
+    # Convert .json.lz4 and .tar.lz4 filenames.
+    if not basename.endswith('.jsonl.gz'):
+        basename = basename.rsplit('.', 2)[0] + '.jsonl.gz'
+    return output_dir / entry.country / entry.test_type / f'{entry.date:%Y-%m-%d}' / basename
+
 
 def main(args):
     logging.basicConfig(level=logging.INFO)
@@ -70,29 +77,37 @@ def main(args):
     file_entries = ooni.list_files(
         args.first_date, args.last_date, args.test_type, args.country)
 
-    def fetch_file(entry: ooni_client.FileEntry):
-        nonlocal num_measurements
-        basename = pathlib.PurePosixPath(entry.url.path).name
-        # Fix .json.lz4 and .tar.lz4 filenames.
-        if not basename.endswith('.jsonl.gz'):
-            basename = basename.rsplit('.', 2)[0] + '.jsonl.gz'
+    def sync_file(entry: ooni_client.FileEntry):
+        target_file_path = _make_local_path(args.output_dir, entry)
+        if target_file_path.is_file():
+            return f'Skipped existing {entry.url.geturl()}]'
+        return fetch_file(entry, target_file_path)
 
-        target_filename = args.output_dir / entry.country / \
-            f'{entry.date:%Y-%m-%d}' / basename
-        os.makedirs(target_filename.parent, exist_ok=True)
+    def fetch_file(entry: ooni_client.FileEntry, target_file_path: pathlib.Path):
+        nonlocal num_measurements
+        os.makedirs(target_file_path.parent, exist_ok=True)
         if ooni.cost_usd > args.cost_limit_usd:
             raise CostLimitError(
                 f'Downloaded {ooni.bytes_downloaded / 2**20} MiB')
-        with gzip.open(target_filename, mode='wt', encoding='utf-8', newline='\n') as target_file:
-            for measurement in entry.get_measurements():
-                num_measurements += 1
-                m = trim_measurement(measurement, args.max_string_size)
-                ujson.dump(m, target_file)
-                target_file.write('\n')
+        # We use a temporary file to atomatically write the destination and make sure we don't have partially written files.
+        # We put the temporary file in the same location as the destination because you can't atomically
+        # rename if they are in different devices, as is the case for Kaggle.
+        temp_path = target_file_path.with_name(f'{target_file_path.name}.tmp')
+        try:
+            with gzip.open(temp_path, mode='wt', encoding='utf-8', newline='\n') as target_file:
+                for measurement in entry.get_measurements():
+                    num_measurements += 1
+                    m = trim_measurement(measurement, args.max_string_size)
+                    ujson.dump(m, target_file)
+                    target_file.write('\n')
+                temp_path.replace(target_file_path)
+        except:
+            temp_path.unlink()
+            raise
         return f'Downloaded {entry.url.geturl()} [{entry.size:,} bytes]'
 
     with ThreadPool(processes=5 * os.cpu_count()) as sync_pool:
-        for msg in sync_pool.imap_unordered(fetch_file, file_entries):
+        for msg in sync_pool.imap_unordered(sync_file, file_entries):
             logging.info(msg)
 
     logging.info(f'Measurements: {num_measurements}, Downloaded {ooni.bytes_downloaded/2**20:0.3f} MiB, Estimated Cost: ${ooni.cost_usd:02f}')
@@ -103,7 +118,7 @@ def _parse_date_flag(date_str: str) -> dt.date:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser("Fetch OONI measurements")
+    parser = argparse.ArgumentParser("Sync OONI measurements")
     parser.add_argument("--country", type=str, required=True)
     parser.add_argument("--first_date", type=_parse_date_flag,
                         default=dt.date.today() - dt.timedelta(days=14))
