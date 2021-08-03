@@ -11,13 +11,13 @@ You can install the library directly from Gihub with
 
 To fetch the last 14 days of data for a country into a `ooni_data/` directory:
 
-    python -m netanalysis.ooni.data.fetch_measurements --country=BY --output_dir=./ooni_data/
+    python -m netanalysis.ooni.data.sync_measurements --country=BY --output_dir=./ooni_data/
 
-If you call it a second time, it will redownload data already downloaded.
+If you call it a second time, it will skip data already downloaded.
 
 Use `--first_date` and `--last_date` to restrict the fetch to a specific, inclusive, date range. For example:
 
-    python -m netanalysis.ooni.data.fetch_measurements --output_dir=./ooni_data/ --country=BY --first_date=2021-01-01 --last_date=2021-01-31
+    python -m netanalysis.ooni.data.sync_measurements --output_dir=./ooni_data/ --country=BY --first_date=2021-01-01 --last_date=2021-01-31
 
 ### Data trimming
 By default the tool will drop any measurement field that are longer than 1000 characters in order to save space. You can change that by passing a different value for `--max_string_size`.
