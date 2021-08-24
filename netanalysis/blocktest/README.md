@@ -31,4 +31,4 @@ SNI
 ```
 
 
-For more examples of this script being used in practice, see the [discussion on blocking in Uzbekistan in July 2021](https://ntc.party/t/twitter-tik-tok-skype/1122/15).
+For more examples of this script being used in practice, see the [discussion on blocking in Uzbekistan in July 2021](https://ntc.party/t/twitter-tik-tok-skype/1122).
