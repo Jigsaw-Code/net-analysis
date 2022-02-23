@@ -6,8 +6,8 @@ third_party {
   }
   url {
     type: ARCHIVE
-    value: "https://download.db-ip.com/free/dbip-asn-lite-2020-10.mmdb.gz"
+    value: "https://download.db-ip.com/free/dbip-asn-lite-2022-02.mmdb.gz"
   }
-  version: "2020-10"
-  last_upgrade_date { year: 2020 month: 10 day: 30 }
+  version: "2022-02"
+  last_upgrade_date { year: 2022 month: 2 day: 23 }
 }
