@@ -41,7 +41,7 @@ class ApiTrafficRepository(model.TrafficRepository):
     """TrafficRepository that reads the traffic data from Google's Transparency Report."""
 
     def _query_api(self, endpoint, params=None):
-        query_url = "https://www.google.com/transparencyreport/api/v3/traffic/" + \
+        query_url = "https://transparencyreport.google.com/transparencyreport/api/v3/traffic/" + \
             quote(endpoint)
         if params:
             query_url = query_url + "?" + urlencode(params)
