@@ -50,3 +50,7 @@ Run the unit tests:
 ```sh
 python -m unittest -v
 ```
+
+## IDE
+
+We recommend [Visual Studio Code](https://code.visualstudio.com/), with the [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python) and [Pylance](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-pylance) extensions from Microsoft.

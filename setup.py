@@ -39,6 +39,7 @@ setuptools.setup(
     python_requires='>=3.6.9',
     install_requires=[
         "boto3",
+        "boto3-stubs[s3]",
         "cchardet",
         "certifi",
         "iso3166",

@@ -63,10 +63,9 @@ def get_expectations_1(time_series: pd.Series) -> pd.DataFrame:
 
 
 def find_anomalies(time_series: pd.Series) -> List[model.AnomalyPoint]:
-    anomalies = []  # type: List[model.AnomalyPoint]
+    anomalies: List[model.AnomalyPoint] = []
     expectations = get_expectations_1(time_series)
-    anomalous_dates = (time_series <
-                       expectations.lower_bound).loc[lambda e: e].index  # type: List[pd.Timestamp]
+    anomalous_dates: List[pd.Timestamp] = (time_series < expectations.lower_bound).loc[lambda e: e].index
     mean_traffic = time_series.mean()
     for timestamp in anomalous_dates:
         relative_impact = (
@@ -80,8 +79,8 @@ def group_as_product_disruptions(product_id: traffic.ProductId,
                                  anomalies: Iterable[model.AnomalyPoint],
                                  max_time_delta: datetime.timedelta) -> List[model.ProductDisruption]:
     """Groups anomalies that are within the given max_time_delta"""
-    disruptions = []  # type: List[model.ProductDisruption]
-    current_disruption = None  # type: model.ProductDisruption
+    disruptions: List[model.ProductDisruption] = []
+    current_disruption: model.ProductDisruption = None
     disruption_end = datetime.datetime.min
     for anomaly in anomalies:
         if anomaly.timestamp > disruption_end + max_time_delta:
@@ -99,8 +98,8 @@ def remove_minor_disruptions(product_disruptions: List[model.ProductDisruption])
 def group_as_regional_disruptions(
         region_code: str,
         product_disruptions: List[model.ProductDisruption]) -> List[model.RegionDisruption]:
-    region_disruptions = []  # type: List[model.RegionDisruption]
-    current_region_disruption = None  # type: model.RegionDisruption
+    region_disruptions: List[model.RegionDisruption] = []
+    current_region_disruption: model.RegionDisruption = None
     disruption_end = datetime.datetime.min
     for product_disruption in sorted(product_disruptions, key=lambda d: d.start):
         if product_disruption.start > disruption_end:
@@ -219,9 +218,9 @@ def find_all_disruptions(repo: traffic.TrafficRepository,
     #     TRANSLATE, 2017-05-31, 2017-06-02, 2.786339, 0.203082, https://transparencyreport.google.com/traffic/overview?lu=fraction_traffic&fraction_traffic=product:16;start:1495684800000;end:1496980800000;region:ET
     #     WEB_SEARCH, 2017-05-31, 2017-06-07, 5.233837, 1.615268, https://transparencyreport.google.com/traffic/overview?lu=fraction_traffic&fraction_traffic=product:19;start:1494820800000;end:1498276800000;region:ET
 
-    all_disruptions = []  # type: List[model.RegionDisruption]
+    all_disruptions: List[model.RegionDisruption] = []
     for region_code in regions:
-        product_disruptions = []  # type: List[model.ProductDisruption]
+        product_disruptions: List[model.ProductDisruption] = []
         for product_id in products:
             try:
                 if product_id == traffic.ProductId.UNKNOWN:

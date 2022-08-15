@@ -23,7 +23,6 @@ Sample usage:
 """
 
 import argparse
-import datetime
 import glob
 import ipaddress
 import logging
@@ -39,15 +38,12 @@ import ujson as json
 from netanalysis.dns.data import model as dns
 from netanalysis.dns.data import serialization as ds
 
-
-def parse_ooni_date(date_str: str) -> datetime.datetime:
-    # TODO: Set the timezone
-    return datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+from . import parse
 
 
 def get_control_dns_measurement(measurement, measurement_id):
-    measurement_time = parse_ooni_date(
-        measurement.get("measurement_start_time")).isoformat()
+    m = parse.Measurement(measurement)
+    measurement_time = m.time.isoformat()
 
     try:
         addresses = measurement["test_keys"]["control"]["dns"]["addrs"]
@@ -58,7 +54,7 @@ def get_control_dns_measurement(measurement, measurement_id):
         raise ValueError("OONI Control Measurement with empty test_keys.control.dns.addrs: %s" %
                          pprint.pformat(measurement, compact=True))
     records: List[dns.ResourceRecord] = []
-    last_cname = urlparse(measurement.get("input")).hostname
+    last_cname = m.hostname
     for address in addresses:
         try:
             records.append(dns.ResourceRecord(
@@ -68,8 +64,6 @@ def get_control_dns_measurement(measurement, measurement_id):
                 last_cname, dns.CnameData(address)))
         last_cname = address
 
-    measurement_time = parse_ooni_date(
-        measurement.get("measurement_start_time")).isoformat()
     return dns.DnsMeasurement(
         measurement_id="%s:control" % measurement_id,
         records=records,
@@ -80,8 +74,8 @@ def get_control_dns_measurement(measurement, measurement_id):
 
 
 def get_experiment_dns_measurement(measurement, measurement_id) -> dns.DnsMeasurement:
-    measurement_time = parse_ooni_date(
-        measurement.get("measurement_start_time")).isoformat()
+    m = parse.Measurement(measurement)
+    measurement_time = m.time.isoformat()
     try:
         ooni_queries = measurement["test_keys"]["queries"]
     except KeyError:
@@ -112,8 +106,6 @@ def get_experiment_dns_measurement(measurement, measurement_id) -> dns.DnsMeasur
                     except ValueError:
                         logging.warning(
                             "Measurement %s: invalid IP answer %s", measurement["id"], ip_str)
-    measurement_time = parse_ooni_date(
-        measurement.get("measurement_start_time")).isoformat()
     resolver_ip_str = measurement["test_keys"].get("client_resolver")
     resolver_ip = ipaddress.ip_address(
         resolver_ip_str) if resolver_ip_str else None
@@ -123,7 +115,7 @@ def get_experiment_dns_measurement(measurement, measurement_id) -> dns.DnsMeasur
         time=measurement_time,
         resolver_ip=resolver_ip,
         client_asn=int(measurement.get("probe_asn")[2:]),
-        client_country=measurement.get("probe_cc"),
+        client_country=m.country,
         provenance="ooni:%s" % measurement_id,
     )
 
