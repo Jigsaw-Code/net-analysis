@@ -29,7 +29,7 @@ You should specify a version tag or a commit if the `master` branch breaks you.
 
 [Analyze DNS Queries](netanalysis/analysis/analyze_dns.md) describes how to fetch data from OONI and check for interference.
 
-[netanalysis/analysis/DomainAnalysis.ipynb](netanalysis/analysis/DomainAnalysis.ipynb) gives you an idea of what the analysis look like.
+[netanalysis/dns/analysis/DomainAnalysis.ipynb](netanalysis/dns/analysis/DomainAnalysis.ipynb) gives you an idea of what the analysis look like.
 
 ### Fetch Google Traffic Data for analysis:
 
